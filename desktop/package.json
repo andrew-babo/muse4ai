@@ -1,0 +1,41 @@
+{
+  "name": "muse4ai",
+  "productName": "Muse4AI",
+  "version": "2.0.0-beta.31",
+  "private": true,
+  "description": "Muse4AI — tạo ảnh và video qua Muse trên Windows",
+  "main": "dist/main/main.cjs",
+  "type": "module",
+  "scripts": {
+    "build:main": "node scripts/build-main.mjs",
+    "build:renderer": "vite build",
+    "build": "npm run build:main && npm run build:renderer",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "start": "electron .",
+    "package:win": "npm run build && node scripts/package-win.mjs",
+    "package:setup": "npm run package:win && node scripts/package-setup.mjs"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.3.0",
+    "@fontsource/be-vietnam-pro": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@tailwindcss/vite": "4.3.3",
+    "@tanstack/react-virtual": "3.14.22",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "electron": "45.0.0",
+    "esbuild": "0.28.2",
+    "lucide-react": "1.61.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "7.0.2",
+    "vite": "8.3.5",
+    "vitest": "5.0.5",
+    "zod": "4.6.7"
+  }
+}

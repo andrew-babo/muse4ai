@@ -1,0 +1,10 @@
+﻿Muse4AI — bộ cài thử nghiệm Windows x64, chưa ký số.
+
+Thoát Muse4AI từ khay hệ thống trước khi cài hoặc nâng cấp.
+Bộ cài dùng quy trình PowerShell hiện có: kiểm SHA-256, cài theo người dùng,
+giữ một bản trước và không thay đổi ExecutionPolicy của máy.
+Dữ liệu, tài khoản, proxy, chứng chỉ và thư viện ảnh/video được giữ nguyên.
+Không cần quyền quản trị. Windows có thể hiện cảnh báo vì bản này chưa ký số.
+
+Gỡ cài hoặc quay lại bản trước: tải gói ZIP cùng phiên bản và làm theo
+HUONG-DAN-CAI.md (tiếng Việt) hoặc INSTALL-GUIDE.md (English). Bộ cài EXE này không thêm trình gỡ cài riêng.

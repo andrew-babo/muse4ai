@@ -1,0 +1,224 @@
+@import "tailwindcss";
+@import "@fontsource/be-vietnam-pro/400.css";
+@import "@fontsource/be-vietnam-pro/500.css";
+@import "@fontsource/be-vietnam-pro/600.css";
+@import "@fontsource/be-vietnam-pro/700.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+/* Design tokens — docs/build-1.0/screens.md §1.2 (single source for colors, radii, motion). */
+@theme {
+  --font-sans: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, monospace;
+
+  --color-canvas: #f7f4ee;
+  --color-canvas-deep: #efe9df;
+  --color-surface: #fbf9f5;
+  --color-ink: #1a1814;
+  --color-ink-2: #5f5a52;
+  --color-ink-3: #6e695f; /* ≥ 4.5:1 on canvas-deep (AC-A11Y-02, measured) */
+  --color-line: rgb(26 24 20 / 0.08);
+  --color-line-strong: rgb(26 24 20 / 0.14);
+  --color-accent: #2e63e6;
+  --color-accent-soft: rgb(46 99 230 / 0.12);
+  --color-accent-ink: #1a50d7;
+  --color-ok: #3f8f6b;
+  --color-ok-soft: rgb(63 143 107 / 0.14);
+  --color-ok-ink: #2d664d;
+  --color-attention: #c98a1b;
+  --color-attention-soft: rgb(201 138 27 / 0.15);
+  --color-attention-ink: #7a5310;
+  --color-danger: #c34037;
+  --color-danger-soft: rgb(200 70 61 / 0.13);
+  --color-danger-ink: #a2352e;
+  --color-neutral: #9a948a;
+  --color-neutral-soft: rgb(154 148 138 / 0.16);
+  --color-on-ink: #f7f4ee;
+  --color-scrim: rgb(26 24 20 / 0.28);
+  /* Maker brand (Andrew Babo logo): bronze ink + gold, used only by the credit line and Settings › About. */
+  --color-brand: #4a2810;
+  --color-brand-gold: #d4922a;
+
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 10px;
+
+  --shadow-float: 0 12px 40px -12px rgb(26 24 20 / 0.12);
+  --shadow-pop: 0 24px 64px -16px rgb(26 24 20 / 0.22);
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+  --text-2xl: 40px;
+
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --animate-shimmer: shimmer 2.4s linear infinite;
+  --animate-breathe: breathe 3.2s ease-in-out infinite;
+  --animate-spin-slow: spin 1.2s linear infinite;
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-2px) scale(1.03); }
+  }
+}
+
+:root {
+  --glass-bg: rgb(255 255 255 / 0.64);
+  --glass-strong-bg: rgb(255 255 255 / 0.84);
+  --glass-blur: blur(28px) saturate(140%);
+  --glass-border: rgb(255 255 255 / 0.85);
+  --glass-outline: rgb(26 24 20 / 0.06);
+  color-scheme: light;
+}
+
+/* R21 — light glass for machines without GPU compositing: blur only on chrome surfaces. */
+html[data-glass="light"] {
+  --glass-blur: blur(12px);
+}
+html[data-glass="solid"] {
+  --glass-bg: #fbf9f5;
+  --glass-strong-bg: #fbf9f5;
+  --glass-blur: none;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: var(--color-ink);
+  background: var(--color-canvas);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+}
+input,
+textarea,
+[data-selectable] {
+  user-select: text;
+}
+::selection {
+  background: var(--color-accent-soft);
+}
+
+/* Canvas glows — soft morning light, off in solid/reduced modes. */
+.canvas-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(40% 50% at 12% 8%, rgb(255 255 255 / 0.9), transparent 70%),
+    radial-gradient(45% 55% at 88% 18%, rgb(231 238 247 / 0.75), transparent 70%),
+    radial-gradient(50% 60% at 70% 95%, rgb(239 230 216 / 0.8), transparent 70%);
+}
+html[data-glass="solid"] .canvas-glow {
+  display: none;
+}
+
+@utility glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 0 0 1px var(--glass-outline), var(--shadow-float);
+}
+@utility glass-strong {
+  background: var(--glass-strong-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 0 0 1px var(--glass-outline), var(--shadow-pop);
+}
+/* Cards/lists never blur in light mode (R21 — many blurred items drop to 7 FPS on the reference VPS). */
+@utility glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 0 0 1px var(--glass-outline), 0 6px 24px -14px rgb(26 24 20 / 0.14);
+}
+html[data-glass="light"] .glass-card {
+  background: rgb(255 255 255 / 0.82);
+}
+/* Settings › About maker panel: warm ivory with a faint gold glow behind the logo. */
+@utility brand-panel {
+  background:
+    radial-gradient(60% 70% at 50% 42%, color-mix(in oklab, var(--color-brand-gold) 10%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in oklab, var(--color-surface) 70%, white), var(--color-canvas));
+}
+@utility drag {
+  -webkit-app-region: drag;
+}
+@utility no-drag {
+  -webkit-app-region: no-drag;
+}
+@utility shimmer-bg {
+  background: linear-gradient(100deg, rgb(255 255 255 / 0) 20%, rgb(255 255 255 / 0.75) 50%, rgb(255 255 255 / 0) 80%), linear-gradient(135deg, #f3eee5, #ebe6f0 50%, #e9eef5);
+  background-size: 200% 100%, 100% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* Focus ring: 2px accent + 2px white halo so it reads on glass (AC-A11Y-01).
+   In the base layer so a component can replace it (the composer rings its whole pill instead). */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgb(255 255 255 / 0.9);
+    border-radius: 8px;
+  }
+}
+
+/* In the components layer so a utility such as overflow-x-hidden can narrow it. */
+@layer components {
+  .scroll-area {
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(26 24 20 / 0.18) transparent;
+  }
+}
+.scroll-area::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.scroll-area::-webkit-scrollbar-thumb {
+  background: rgb(26 24 20 / 0.16);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+html[data-motion="reduce"] *,
+html[data-motion="reduce"] *::before,
+html[data-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+@media (forced-colors: active) {
+  .glass,
+  .glass-strong,
+  .glass-card {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    backdrop-filter: none;
+  }
+}

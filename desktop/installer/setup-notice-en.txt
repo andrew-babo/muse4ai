@@ -1,0 +1,10 @@
+﻿Muse4AI — test installer for Windows x64, not code-signed.
+
+Quit Muse4AI from the system tray before installing or upgrading.
+This installer runs the existing PowerShell process: it checks SHA-256, installs
+per user, keeps one previous version and never changes the machine's ExecutionPolicy.
+Data, accounts, proxies, certificates and the image/video library are kept.
+No admin rights needed. Windows may warn you because this build is not signed.
+
+To uninstall or roll back: download the ZIP package of the same version and follow
+INSTALL-GUIDE.md. This EXE does not add a separate uninstaller.
