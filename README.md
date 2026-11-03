@@ -10,11 +10,13 @@ Muse4AI runs on your own Windows PC and hands your Muse session to ChatGPT, Clau
 Cursor, Codex, n8n or anything else that speaks **REST**, **MCP** or **OAuth** —
 with no cloud middleman and no per-seat fee.
 
+[**Website**](https://muse4ai.andrewbabo.com) ·
 [**Download**](https://muse4ai.andrewbabo.com/download) ·
 [**Guide**](https://muse4ai.andrewbabo.com/docs) ·
 [**For agents**](https://muse4ai.andrewbabo.com/agents) ·
 [Tiếng Việt](docs/README-vi.md)
 
+![Website muse4ai.andrewbabo.com](https://img.shields.io/badge/website-muse4ai.andrewbabo.com-1A50D7?style=flat-square)
 ![MIT licensed](https://img.shields.io/badge/license-MIT-2D664D?style=flat-square)
 ![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-1A50D7?style=flat-square)
 ![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-5F5A52?style=flat-square)

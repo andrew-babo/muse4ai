@@ -10,11 +10,13 @@ Muse4AI chạy ngay trên máy Windows của bạn và đưa phiên Muse của b
 Claude, Cursor, Codex, n8n hay bất cứ công cụ nào biết gọi **REST**, **MCP** hoặc
 **OAuth** — không qua máy chủ trung gian, không phí theo lượt.
 
+[**Website**](https://muse4ai.andrewbabo.com/vi) ·
 [Tải về](https://muse4ai.andrewbabo.com/vi/download) ·
 [Hướng dẫn](https://muse4ai.andrewbabo.com/vi/docs) ·
 [Dành cho agent](https://muse4ai.andrewbabo.com/vi/agents) ·
 [English](../README.md)
 
+![Website muse4ai.andrewbabo.com](https://img.shields.io/badge/website-muse4ai.andrewbabo.com-1A50D7?style=flat-square)
 ![Giấy phép MIT](https://img.shields.io/badge/license-MIT-2D664D?style=flat-square)
 ![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-1A50D7?style=flat-square)
 ![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-5F5A52?style=flat-square)
