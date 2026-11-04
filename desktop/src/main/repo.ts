@@ -96,7 +96,6 @@ const PROXY_COLS: Record<string, string> = {
   latencyMs: "latency_ms",
   lastTestedAt: "last_tested_at",
   lastError: "last_error",
-  accountId: "account_id",
 };
 const JOB_COLS: Record<string, string> = {
   batchId: "batch_id",
@@ -408,7 +407,6 @@ export class Repo {
     latencyMs: N(r.latency_ms),
     lastTestedAt: N(r.last_tested_at),
     lastError: (r.last_error as string) ?? null,
-    accountId: (r.account_id as string) ?? null,
     createdAt: Number(r.created_at),
     rev: Number(r.rev),
   });
@@ -435,6 +433,10 @@ export class Repo {
   updateProxy(id: string, patch: Partial<Proxy>): Proxy {
     this.patch("proxies", PROXY_COLS, id, patch as Record<string, unknown>);
     return this.getProxy(id)!;
+  }
+  /** Build 3.2 R142 — the accounts on a proxy, oldest first (`accounts.proxy_id` is the only record of who uses it). */
+  accountsOnProxy(proxyId: string): Account[] {
+    return (this.db.prepare("SELECT * FROM accounts WHERE proxy_id=? ORDER BY created_at, alias").all(proxyId) as Row[]).map(this.mapAccount);
   }
   deleteProxy(id: string): void {
     this.db.prepare("DELETE FROM proxies WHERE id=?").run(id);

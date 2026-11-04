@@ -14,6 +14,7 @@ import { classifyAuthMe } from "../shared/vibes";
 import type { ChannelPage } from "./adapter/muse/httpChannel";
 import { GW_PAGE_URL } from "./adapter/muse/httpProtocol";
 import { UiWorkPool } from "./uiWorkPool";
+import { ExtraPages } from "./extraPages";
 
 // One persistent session partition per account, with that account's proxy and no DIRECT fallback (R1, R2).
 // rev 6 (rules B32): the same partition holds two pages — Muse and Vibes — each in its own hidden window. Both use the
@@ -119,7 +120,20 @@ export class AccountManager implements AccountUi {
   private workKeys = new Map<MuseAdapter, string>();
   quitting = false;
 
+  /** Build 3.2 — popups and tabs the account's Muse window opens while the user works in it (R148–R154). */
+  readonly extra: ExtraPages;
+
   constructor(private host: AccountHost) {
+    this.extra = new ExtraPages({
+      session: (id) => this.sessionFor(id),
+      alias: (id) => this.host.alias(id),
+      anchor: (id) => {
+        const w = this.windows.get(slotKey(id, "muse"));
+        return w && !w.isDestroyed() ? w : null;
+      },
+      icon: this.host.icon,
+      log: (level, msg, data) => this.host.log?.(level, msg, data),
+    });
     this.idleTimer = setInterval(() => this.unloadIdlePages(), 30_000);
     this.idleTimer.unref?.();
     app.on("login", (event, wc, _details, authInfo, callback) => {
@@ -218,7 +232,10 @@ export class AccountManager implements AccountUi {
         child.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
       });
     } else {
-      w.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+      // R148: the Muse window may open popups and tabs only while it is on screen (sign-in or takeover); hidden, it is
+      // an automation page and every window.open is refused.
+      const win = w;
+      this.extra.attach(accountId, win.webContents, () => !win.isDestroyed() && win.isVisible(), () => win);
     }
     // Supervision: a crashed page is dropped at once and rebuilt on next use (the session keeps the login);
     // a page hung longer than PAGE_HANG_MS is crashed on purpose so the next step starts clean.
@@ -246,6 +263,7 @@ export class AccountManager implements AccountUi {
     w.on("close", (e) => {
       if (this.quitting) return;
       e.preventDefault();
+      if (site === "muse") this.extra.closeAll(accountId);
       w!.hide();
       this.resolveWaiter(key, false);
     });
@@ -271,6 +289,7 @@ export class AccountManager implements AccountUi {
     }
     const { accountId, site } = slotOf(key);
     if ((this.host.activeSite?.(accountId) ?? "muse") === site) this.stopPreview(accountId);
+    if (site === "muse") this.extra.closeAll(accountId);
     this.resolveWaiter(key, false);
     setImmediate(() => {
       if (!w.isDestroyed()) {
@@ -310,7 +329,7 @@ export class AccountManager implements AccountUi {
       const { accountId, site } = slotOf(key);
       const inUse = (this.host.activeSite?.(accountId) ?? "muse") === site;
       const activity = {
-        visible: w.isVisible() || w.getChildWindows().some((c) => !c.isDestroyed() && c.isVisible()),
+        visible: w.isVisible() || w.getChildWindows().some((c) => !c.isDestroyed() && c.isVisible()) || (site === "muse" && this.extra.hasOpen(accountId)),
         previewing: this.previews.has(accountId) && inUse,
         loggingIn: this.loginWaiters.has(key),
         busy: (this.host.busy?.(accountId) ?? false) && inUse,
@@ -397,6 +416,8 @@ export class AccountManager implements AccountUi {
         if (this.loginWaiters.get(key) === finish) this.loginWaiters.delete(key);
         if (this.loginPokes.get(key) === poke) this.loginPokes.delete(key);
         if (ok !== false && !w.isDestroyed()) {
+          // R154: sign-in done — its popups close, tabs the user opened stay (they may still be managing something).
+          if (site === "muse") this.extra.closeAll(accountId, true);
           for (const c of w.getChildWindows()) if (!c.isDestroyed()) c.close();
           w.hide();
         }
@@ -454,6 +475,7 @@ export class AccountManager implements AccountUi {
     for (const s of site ? [site] : (["muse", "vibes"] as Site[])) {
       const key = slotKey(accountId, s);
       this.resolveWaiter(key, false);
+      if (s === "muse") this.extra.closeAll(accountId);
       const w = this.windows.get(key);
       if (w && !w.isDestroyed()) {
         for (const c of w.getChildWindows()) if (!c.isDestroyed()) c.close();
@@ -471,6 +493,7 @@ export class AccountManager implements AccountUi {
   }
 
   hideTakeover(accountId: string): void {
+    this.extra.closeAll(accountId);
     for (const s of ["muse", "vibes"] as Site[]) {
       const w = this.windows.get(slotKey(accountId, s));
       if (w && !w.isDestroyed()) w.hide();
@@ -586,6 +609,7 @@ export class AccountManager implements AccountUi {
 
   async destroy(accountId: string): Promise<void> {
     this.stopPreview(accountId);
+    this.extra.forget(accountId);
     this.workPool.remove(accountId);
     this.destroyChannel(accountId);
     for (const s of ["muse", "vibes"] as Site[]) {

@@ -379,6 +379,9 @@ export default {
   "Tệp đã bị di chuyển hoặc xoá ngoài app": "File was moved or deleted outside the app",
   "[thư mục thư viện]": "[Library folder]",
   "(đã xoá)": "(deleted)",
+  // main/extraPages.ts
+  "Đang tải…": "Loading…",
+  "Đóng trang": "Close page",
   // main/probe.ts
   "quá thời gian giải mã": "decoding timed out",
   "video lỗi giải mã": "video decoding failed",

@@ -22,7 +22,18 @@ export const UI = {
     language: l("Language", "Ngôn ngữ"),
     home: l("Muse4AI home", "Trang chủ Muse4AI"),
   },
+  github: {
+    mark: l("GitHub", "GitHub"),
+    source: l("Source code", "Mã nguồn"),
+    viewSource: l("View source on GitHub", "Xem mã nguồn trên GitHub"),
+    issues: l("Report a problem", "Báo một lỗi"),
+    stars: l("stars", "lượt theo dõi"),
+    clone: l("Copy the clone command", "Chép lệnh tải code"),
+    folderNote: l("Inside the repo", "Bên trong kho code"),
+    licenseNote: l("MIT licensed — free to use and free to learn from.", "Giấy phép MIT — dùng thoải mái, học thoải mái."),
+  },
   footer: {
+
     product: l("Product", "Sản phẩm"),
     docs: l("Docs", "Tài liệu"),
     agents: l("AI agents", "AI agent"),
@@ -241,6 +252,12 @@ export const HOME = {
     "Xây trên mã nguồn mở và ý tưởng từ các dự án muse2api — mọi nguồn đều được ghi.",
   ),
   ossLink: l("Open source & credits", "Mã mở & ghi nguồn"),
+  repoTitle: l("The whole app is on GitHub", "Cả app nằm trên GitHub"),
+  repoBody: l(
+    "Muse4AI is a small personal project, not a company: every line of it is public. Read it, run it from source, or tell Andrew what broke.",
+    "Muse4AI là một dự án cá nhân nhỏ, không phải công ty: từng dòng code đều công khai. Bạn có thể đọc, tự chạy từ code, hoặc báo cho Andrew chỗ nào hỏng.",
+  ),
+
 };
 
 export const FEATURES = {

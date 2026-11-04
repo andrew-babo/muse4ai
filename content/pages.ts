@@ -103,9 +103,10 @@ export const STATIC_PAGES: StaticPage[] = [
     label: { en: "Open source", vi: "Mã mở" },
     title: { en: "Open Source & Credits — Projects Behind Muse4AI", vi: "Mã mở & ghi nguồn — Các dự án phía sau Muse4AI" },
     description: {
-      en: "Thank-you list: the muse2api projects Muse4AI learned from, the libraries, fonts and tools it is built with, and their licenses.",
-      vi: "Lời cảm ơn: các dự án muse2api mà Muse4AI tham khảo, cùng thư viện, font và công cụ được dùng để xây dựng, kèm giấy phép của từng dự án.",
+      en: "Muse4AI's own source code is public on GitHub under MIT, plus the muse2api projects it learned from and every library, font and tool behind it.",
+      vi: "Mã nguồn Muse4AI công khai trên GitHub theo giấy phép MIT, cùng các dự án muse2api nó học hỏi và mọi thư viện, font, công cụ phía sau.",
     },
+
     jsonLd: ["BreadcrumbList"],
     ogImage: false,
   },

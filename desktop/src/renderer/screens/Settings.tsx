@@ -2,6 +2,7 @@ import { Bell, Cable, Copy, FileArchive, FolderOpen, Gauge, Info, ListOrdered, M
 import { useEffect, useState } from "react";
 import { BRAND } from "@shared/brand";
 import { formatBytes, formatDateTime, formatLatency, formatNumber } from "@shared/format";
+import { namesSummary, proxyUsers, usedProxyCount } from "@shared/proxyShare";
 import { proxyEntryWhere, type ProxyImportResult } from "@shared/proxyParse";
 import type { Proxy, Settings as SettingsT } from "@shared/types";
 import { Avatar } from "../components/Avatar";
@@ -240,7 +241,7 @@ function About() {
     <>
       <Card title={BRAND.name} sub={t("Phiên bản {version} · bản cài thử nghiệm, chưa ký số", { version: engine?.version ?? "" })}>
         <p className="text-sm font-medium text-ink-2">{t("Cầu nối AI agent — dùng được với Muse")}</p>
-        <p className="text-sm leading-relaxed text-ink-2">{t("Tạo ảnh và video qua Muse trên Windows: nhiều tài khoản, mỗi tài khoản một proxy, hàng chờ bền vững và thư viện trên máy.")}</p>
+        <p className="text-sm leading-relaxed text-ink-2">{t("Tạo ảnh và video qua Muse trên Windows: nhiều tài khoản, mỗi tài khoản đi qua proxy của nó, hàng chờ bền vững và thư viện trên máy.")}</p>
       </Card>
       <MakerCard />
       <Card title={t("Cài bản mới")} sub={t("Chưa có tự cập nhật. Dữ liệu, tài khoản và thư viện được giữ nguyên khi cài đè.")}>
@@ -361,11 +362,11 @@ export function ProxySettings({ compact }: { compact?: boolean }) {
         <div className="flex items-center justify-between px-5 py-3">
           <h2 className="text-md font-semibold text-ink">{t("Kho proxy")}</h2>
           <span className="text-sm text-ink-2">
-            {t("{proxiesCount} proxy · {healthy} khoẻ · {itemsCount} đang gán", { proxiesCount: formatNumber(proxies.length), healthy: formatNumber(healthy), itemsCount: formatNumber(proxies.filter((p) => p.accountId).length) })}
+            {t("{proxiesCount} proxy · {healthy} khoẻ · {itemsCount} đang gán", { proxiesCount: formatNumber(proxies.length), healthy: formatNumber(healthy), itemsCount: formatNumber(usedProxyCount(proxies, accounts)) })}
           </span>
         </div>
         {proxies.length === 0 ? (
-          <Empty icon={<Network className="size-6" />} title={t("Chưa có proxy")} body={t("Mỗi tài khoản Muse cần một proxy riêng để không lộ chung IP.")} />
+          <Empty icon={<Network className="size-6" />} title={t("Chưa có proxy")} body={t("Nên dùng mỗi tài khoản Muse một proxy riêng. Dùng chung được, nhưng các tài khoản sẽ ra cùng một địa chỉ IP.")} />
         ) : (
           <table className="w-full table-fixed text-sm">
             <colgroup>
@@ -390,7 +391,7 @@ export function ProxySettings({ compact }: { compact?: boolean }) {
             </thead>
             <tbody>
               {proxies.map((p) => {
-                const acc = accounts.find((a) => a.id === p.accountId);
+                const users = proxyUsers(p.id, accounts);
                 const addr = `${p.host}:${p.port}`;
                 return (
                   <tr key={p.id} className="border-b border-line align-middle last:border-0">
@@ -427,10 +428,16 @@ export function ProxySettings({ compact }: { compact?: boolean }) {
                       <div className="text-ink-3">{formatLatency(p.latencyMs)}</div>
                     </td>
                     <td className="py-2.5 pr-2">
-                      {acc ? (
-                        <span className="flex min-w-0 items-center gap-1.5 text-ink">
-                          <Avatar account={acc} size={20} showStatus={false} />
-                          <span className="truncate">{acc.alias}</span>
+                      {users.length ? (
+                        <span className="flex min-w-0 items-center gap-1.5 text-ink" title={users.map((u) => u.alias).join(", ")}>
+                          <span className="flex shrink-0 -space-x-1.5">
+                            {users.slice(0, 2).map((u) => (
+                              <span key={u.id} className="rounded-full ring-2 ring-surface">
+                                <Avatar account={u} size={20} showStatus={false} />
+                              </span>
+                            ))}
+                          </span>
+                          <span className="truncate">{namesSummary(users.map((u) => u.alias), users.length > 2 ? 1 : 2)}</span>
                         </span>
                       ) : (
                         <span className="text-ink-3">{t("Trống")}</span>
@@ -442,8 +449,8 @@ export function ProxySettings({ compact }: { compact?: boolean }) {
                         align="end"
                         items={[
                           { label: t("Kiểm lại"), icon: <RefreshCw className="size-4" />, onSelect: () => void act("proxy.test", { id: p.id }) },
-                          { label: t("Gỡ khỏi tài khoản"), icon: <Unlink className="size-4" />, disabled: !p.accountId, onSelect: () => void act("proxy.unassign", { id: p.id }) },
-                          { label: t("Xoá proxy"), icon: <Trash2 className="size-4" />, danger: true, disabled: !!p.accountId, hint: p.accountId ? t("Gỡ khỏi tài khoản trước") : undefined, onSelect: () => setDel(p) },
+                          { label: users.length > 1 ? t("Gỡ khỏi {n} tài khoản", { n: users.length }) : t("Gỡ khỏi tài khoản"), icon: <Unlink className="size-4" />, disabled: users.length === 0, onSelect: () => void act("proxy.unassign", { id: p.id }) },
+                          { label: t("Xoá proxy"), icon: <Trash2 className="size-4" />, danger: true, disabled: users.length > 0, hint: users.length ? t("Gỡ khỏi tài khoản trước") : undefined, onSelect: () => setDel(p) },
                         ]}
                         trigger={(arg) => (
                           <IconButton label={t("Thao tác {label}", { label: p.label })} size="sm" {...arg}>

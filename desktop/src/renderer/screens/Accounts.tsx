@@ -1,4 +1,4 @@
-import { Check, Eye, Gauge, Globe, LogIn, MonitorPlay, MoreHorizontal, Pause, Pencil, Play, Plus, RefreshCw, Shield, ShieldCheck, Trash2, Unplug, Users, Zap } from "lucide-react";
+import { AppWindow, Check, Eye, Gauge, Globe, LogIn, MonitorPlay, MoreHorizontal, Pause, Pencil, Play, Plus, RefreshCw, Shield, ShieldCheck, Trash2, Unplug, Users, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CAPABILITY_LABEL } from "@shared/capabilities";
 import { QUOTA_TIER_CHIP, quotaView } from "@shared/quota";
@@ -6,7 +6,9 @@ import { ALIAS_MAX } from "@shared/constants";
 import { formatLatency, formatNumber, formatTime } from "@shared/format";
 import type { Account, CapabilityKey, Proxy } from "@shared/types";
 import { validateAlias } from "@shared/validate";
+import { namesSummary, proxyUsers, suggestProxy } from "@shared/proxyShare";
 import { Avatar } from "../components/Avatar";
+import { ProxyPicker } from "../components/ProxyPicker";
 import { Confirm, Dialog, Menu } from "../components/Overlay";
 import { Button, Empty, Field, IconButton, Pill, SectionTitle, Spinner, TextInput } from "../components/ui";
 import { act, call } from "../lib/api";
@@ -58,7 +60,7 @@ export function Accounts() {
     <div className="flex h-full">
       <div className="scroll-area min-w-0 flex-1 px-8 pt-6">
         <SectionTitle
-          sub={t("{accountsCount} tài khoản · {itemsCount} đang nhận việc · mỗi tài khoản một proxy riêng", { accountsCount: formatNumber(accounts.length), itemsCount: formatNumber(accounts.filter((a) => a.state === "ready" || a.state === "busy").length) })}
+          sub={t("{accountsCount} tài khoản · {itemsCount} đang nhận việc", { accountsCount: formatNumber(accounts.length), itemsCount: formatNumber(accounts.filter((a) => a.state === "ready" || a.state === "busy").length) })}
           actions={
             <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
               {t("Thêm tài khoản")}
@@ -71,7 +73,7 @@ export function Accounts() {
           <Empty
             icon={<Users className="size-6" />}
             title={t("Chưa có tài khoản nào")}
-            body={t("Thêm tài khoản Muse đầu tiên: em gán cho nó một proxy riêng rồi mở cửa sổ để anh đăng nhập. Em không lưu mật khẩu.")}
+            body={t("Thêm tài khoản Muse đầu tiên: em gán cho nó một proxy rồi mở cửa sổ để anh đăng nhập. Em không lưu mật khẩu.")}
             action={
               <Button variant="primary" icon={<Plus className="size-4" />} onClick={() => setAdding(true)}>
                 {t("Thêm tài khoản")}
@@ -82,7 +84,7 @@ export function Accounts() {
           <div className="mt-6 grid grid-cols-1 gap-4 pb-8 xl:grid-cols-2 2xl:grid-cols-3">
             {accounts.map((a) => (
               <div key={a.id} ref={(el) => void (el ? cardRefs.current.set(a.id, el) : cardRefs.current.delete(a.id))}>
-                <AccountCard account={a} proxy={proxies.find((p) => p.id === a.proxyId) ?? null} highlight={focus === a.id} onRename={() => setRename(a)} onProxy={() => setChangeProxy(a)} onRemove={() => setRemove(a)} onTakeover={() => startTakeover(a)} />
+                <AccountCard account={a} proxy={proxies.find((p) => p.id === a.proxyId) ?? null} sharedWith={a.proxyId ? proxyUsers(a.proxyId, accounts, a.id).map((u) => u.alias) : []} highlight={focus === a.id} onRename={() => setRename(a)} onProxy={() => setChangeProxy(a)} onRemove={() => setRemove(a)} onTakeover={() => startTakeover(a)} />
               </div>
             ))}
           </div>
@@ -132,7 +134,7 @@ export function Accounts() {
   );
 }
 
-function AccountCard({ account: a, proxy, highlight, onRename, onProxy, onRemove, onTakeover }: { account: Account; proxy: Proxy | null; highlight: boolean; onRename: () => void; onProxy: () => void; onRemove: () => void; onTakeover: () => void }) {
+function AccountCard({ account: a, proxy, sharedWith, highlight, onRename, onProxy, onRemove, onTakeover }: { account: Account; proxy: Proxy | null; sharedWith: string[]; highlight: boolean; onRename: () => void; onProxy: () => void; onRemove: () => void; onTakeover: () => void }) {
   const st = accountStatus(a);
   const [checking, setChecking] = useState(false);
   const [ip, setIp] = useState<string | null>(null);
@@ -207,6 +209,11 @@ function AccountCard({ account: a, proxy, highlight, onRename, onProxy, onRemove
               <span className="text-danger-ink">{t("Chưa có proxy")}</span>
             )}
           </dd>
+          {proxy && sharedWith.length > 0 && (
+            <dd className="mt-0.5 truncate text-xs text-ink-2" title={sharedWith.join(", ")}>
+              {t("dùng chung với {names}", { names: namesSummary(sharedWith) })}
+            </dd>
+          )}
           {ip && <dd className="mt-0.5 font-mono text-xs text-ink-2">{t("IP ra {ip}", { ip })}</dd>}
         </div>
         <div className="rounded-[12px] bg-ink/4 px-3 py-2">
@@ -289,6 +296,16 @@ function PreviewPanel({ id, onTakeover }: { id: string; onTakeover: (a: Account)
 
 /** S07c / S07c2. `login` = opened right after starting a login flow: show the stepper while it runs, then go back
  * (the store shows the one summary toast). Without it: takeover / checkpoint / needs-login panel as before. */
+/** Build 3.2 R155 — where the pages the Muse window opens go. */
+function ExtraPagesHint() {
+  return (
+    <p className="flex items-start gap-2 text-sm text-ink-2">
+      <AppWindow className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <span>{t("Trang Muse mở thêm (Trung tâm tài khoản Meta, nút Kết nối của công cụ…) hiện trong cửa sổ riêng, cùng proxy của tài khoản.")}</span>
+    </p>
+  );
+}
+
 function TakeoverOverlay({ id, site, loginMode }: { id: string; site: "muse" | "vibes"; loginMode: boolean }) {
   const account = useUi((s) => s.snap?.accounts.find((a) => a.id === id) ?? null);
   const progress = useUi((s) => s.logins[id] ?? null);
@@ -406,12 +423,16 @@ function TakeoverOverlay({ id, site, loginMode }: { id: string; site: "muse" | "
               <p className="flex items-center gap-2 text-sm">
                 <Spinner />{" "}{t("Em tự nhận ra khi đăng nhập xong — anh không cần bấm gì thêm.")}
               </p>
+              <ExtraPagesHint />
             </>
           )}
           {takeover && (
-            <p>
-              {t("Cửa sổ {value} của {alias} đang mở. Tài khoản tạm ngừng nhận việc cho tới khi anh bấm “Đã xong”.", { value: site === "vibes" ? "Vibes" : "Muse", alias: account.alias })}
-            </p>
+            <>
+              <p>
+                {t("Cửa sổ {value} của {alias} đang mở. Tài khoản tạm ngừng nhận việc cho tới khi anh bấm “Đã xong”.", { value: site === "vibes" ? "Vibes" : "Muse", alias: account.alias })}
+              </p>
+              <ExtraPagesHint />
+            </>
           )}
           {needs && <p>{account.state === "checkpoint" ? t("Muse cần anh tự xác minh tài khoản trong cửa sổ Muse. Em không vượt bước này.") : t("Phiên đăng nhập đã hết. Đăng nhập lại để tài khoản tiếp tục nhận việc.")}</p>}
           {!login && !takeover && !needs && <p>{t("Tài khoản đang {toLowerCase}.", { toLowerCase: accountStatus(account).label.toLowerCase() })}</p>}
@@ -487,6 +508,7 @@ function LoginStepper({ account, progress }: { account: Account; progress: Login
           <p className="flex items-center gap-2 text-sm">
             <Spinner />{" "}{t("Em tự nhận ra khi anh đăng nhập xong.")}
           </p>
+          <ExtraPagesHint />
         </div>
         <ul className="space-y-3 rounded-md bg-ink/4 p-4 text-sm">
           <li className="flex gap-2">
@@ -524,7 +546,8 @@ function AvatarPicker({ value, onChange }: { value: number; onChange: (n: number
 export function AddAccountDialog({ open, onClose, inline }: { open: boolean; onClose: () => void; inline?: boolean }) {
   const accounts = useUi((s) => s.snap?.accounts ?? []);
   const proxies = useUi((s) => s.snap?.proxies ?? []);
-  const free = useMemo(() => proxies.filter((p) => !p.accountId && p.health === "healthy"), [proxies]);
+  const healthy = useMemo(() => proxies.filter((p) => p.health === "healthy"), [proxies]);
+  const freeCount = useMemo(() => healthy.filter((p) => !accounts.some((a) => a.proxyId === p.id)).length, [healthy, accounts]);
   const [avatar, setAvatar] = useState(accounts.length % 8);
   const [alias, setAlias] = useState("");
   const [proxyId, setProxyId] = useState<string | null>(null);
@@ -541,7 +564,8 @@ export function AddAccountDialog({ open, onClose, inline }: { open: boolean; onC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
   const v = validateAlias(alias, accounts.map((a) => a.alias));
-  const chosen = proxyId ?? free[0]?.id ?? null;
+  // R144: an unused healthy proxy is chosen for the user; sharing one is always an explicit click.
+  const chosen = proxyId ?? suggestProxy(proxies, accounts)?.id ?? null;
   const submit = async () => {
     setTouched(true);
     if (!v.ok || !chosen) return;
@@ -564,10 +588,19 @@ export function AddAccountDialog({ open, onClose, inline }: { open: boolean; onC
       <Field label={t("Tên gọi")} htmlFor="acc-alias" hint={t("Chỉ để anh nhận ra trong app — không phải tên đăng nhập Muse.")} error={touched && !v.ok ? t(v.reason) : null}>
         <TextInput id="acc-alias" value={alias} maxLength={ALIAS_MAX + 4} onChange={(e) => setAlias(e.target.value)} invalid={touched && !v.ok} data-autofocus />
       </Field>
-      <Field label="Proxy" hint={free.length ? t("{freeCount} proxy khoẻ đang trống. Mỗi tài khoản một proxy riêng.", { freeCount: free.length }) : undefined}>
-        {free.length === 0 ? (
+      <Field
+        label="Proxy"
+        hint={
+          healthy.length === 0
+            ? undefined
+            : freeCount > 0
+              ? t("{freeCount} proxy chưa dùng · {usedCount} đang dùng (dùng chung được).", { freeCount, usedCount: healthy.length - freeCount })
+              : t("Mọi proxy khoẻ đều đang dùng — chọn một proxy để dùng chung, hoặc nhập thêm proxy.")
+        }
+      >
+        {healthy.length === 0 ? (
           <div className="flex items-center justify-between gap-3 rounded-[12px] bg-attention-soft px-3 py-2.5 text-sm text-ink">
-            {t("Chưa có proxy khoẻ nào trống.")}
+            {t("Chưa có proxy khoẻ nào.")}
             <Button
               size="sm"
               onClick={() => {
@@ -579,12 +612,22 @@ export function AddAccountDialog({ open, onClose, inline }: { open: boolean; onC
             </Button>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t("Chọn proxy")}>
-            {free.map((p) => (
-              <button key={p.id} type="button" role="radio" aria-checked={chosen === p.id} onClick={() => setProxyId(p.id)} className={cx("rounded-full px-3 py-1.5 text-sm", chosen === p.id ? "bg-ink text-on-ink" : "bg-ink/5 text-ink hover:bg-ink/8")}>
-                {p.label} · {p.country ?? "?"} {p.latencyMs ? `· ${formatLatency(p.latencyMs)}` : ""}
-              </button>
-            ))}
+          <div className="flex flex-col gap-2">
+            <ProxyPicker proxies={proxies} accounts={accounts} value={chosen} onChange={setProxyId} healthyOnly label={t("Chọn proxy")} />
+            {freeCount === 0 && (
+              <div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    onClose();
+                    navigate("/settings/proxy");
+                  }}
+                >
+                  {t("Nhập thêm proxy")}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </Field>
@@ -668,7 +711,7 @@ function RenameDialog({ account, onClose }: { account: Account; onClose: () => v
 
 function ProxyDialog({ account, onClose }: { account: Account; onClose: () => void }) {
   const proxies = useUi((s) => s.snap?.proxies ?? []);
-  const options = proxies.filter((p) => p.id === account.proxyId || !p.accountId);
+  const accounts = useUi((s) => s.snap?.accounts ?? []);
   const [sel, setSel] = useState(account.proxyId);
   // R102: the change waits up to 60 s for turns Muse already has, then asks “Dừng chờ”.
   const [phase, setPhase] = useState<"pick" | "waiting" | "force">("pick");
@@ -710,22 +753,8 @@ function ProxyDialog({ account, onClose }: { account: Account; onClose: () => vo
           </>
         }
       >
-        <p className="mb-3">{t("Chỉ hiện proxy đang trống. Nếu tài khoản đang làm việc, app ngừng gửi việc mới và chờ lượt đang chạy xong (tối đa 60 giây) rồi mới đổi.")}</p>
-        <ul className="flex flex-col gap-1.5" role="radiogroup" aria-label="Proxy">
-          {options.map((p) => (
-            <li key={p.id}>
-              <button type="button" role="radio" aria-checked={sel === p.id} onClick={() => setSel(p.id)} className={cx("flex w-full items-center gap-3 rounded-[12px] px-3 py-2 text-left", sel === p.id ? "bg-accent-soft ring-1 ring-accent" : "bg-ink/4 hover:bg-ink/6")}>
-                <span className={cx("size-2 rounded-full", p.health === "healthy" ? "bg-ok" : p.health === "failed" ? "bg-danger" : "bg-neutral")} aria-hidden />
-                <span className="flex-1 text-sm text-ink">
-                  {p.label} · {p.scheme.toUpperCase()} · {p.country ?? t("chưa kiểm")}
-                </span>
-                {p.latencyMs ? <span className="font-mono text-xs text-ink-2">{formatLatency(p.latencyMs)}</span> : null}
-                {p.id === account.proxyId && <span className="text-xs text-ink-2">{t("đang dùng")}</span>}
-              </button>
-            </li>
-          ))}
-          {options.length === 0 && <li className="text-sm">{t("Không còn proxy trống.")}</li>}
-        </ul>
+        <p className="mb-3">{t("Proxy đang dùng cho tài khoản khác vẫn chọn được (dùng chung). Nếu tài khoản đang làm việc, app ngừng gửi việc mới và chờ lượt đang chạy xong (tối đa 60 giây) rồi mới đổi.")}</p>
+        {proxies.length === 0 ? <p className="text-sm">{t("Chưa có proxy nào.")}</p> : <ProxyPicker proxies={proxies} accounts={accounts} value={sel} onChange={setSel} forAccountId={account.id} label="Proxy" />}
       </Dialog>
       <Dialog open={phase === "waiting"} onClose={() => undefined} dismissable={false} title={t("Đang chờ {alias} xong lượt đang chạy", { alias: account.alias })}>
         <p className="flex items-center gap-2">

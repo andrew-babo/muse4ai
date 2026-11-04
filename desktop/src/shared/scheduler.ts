@@ -190,11 +190,3 @@ export function schedule(input: SchedInput): Assignment[] {
 
 export type { PathCapKey };
 
-/** R18 — proposal for a new account's proxy: healthy, unassigned, lowest latency. */
-export function suggestProxy<T extends { id: string; health: string; accountId: string | null; latencyMs: number | null }>(
-  proxies: T[],
-): T | null {
-  const free = proxies.filter((p) => p.health === "healthy" && !p.accountId);
-  free.sort((a, b) => (a.latencyMs ?? Infinity) - (b.latencyMs ?? Infinity));
-  return free[0] ?? null;
-}

@@ -130,8 +130,8 @@ export const DOCS_ACCOUNTS: DocArticle[] = [
       {
         title: { en: "Assign the account’s proxy", vi: "Gán proxy cho tài khoản" },
         body: {
-          en: "In Accounts, use the account card’s menu to change its proxy. A failed proxy does not cause the account to connect directly.",
-          vi: "Trong Tài khoản, mở menu trên thẻ tài khoản để đổi proxy. Khi proxy lỗi, tài khoản không tự kết nối trực tiếp.",
+          en: "In Accounts, use the account card’s menu to change its proxy. Each proxy shows which accounts already use it; sharing is allowed, but those accounts go out through the same IP address. A failed proxy does not cause the account to connect directly.",
+          vi: "Trong Tài khoản, mở menu trên thẻ tài khoản để đổi proxy. Mỗi proxy ghi rõ tài khoản nào đang dùng; dùng chung được, nhưng các tài khoản đó sẽ ra cùng một địa chỉ IP. Khi proxy lỗi, tài khoản không tự kết nối trực tiếp.",
         },
       },
       {
@@ -172,6 +172,6 @@ export const DOCS_ACCOUNTS: DocArticle[] = [
     ],
     related: ["accounts-and-limits", "add-muse-account", "troubleshooting"],
     appRoute: "/settings/proxy",
-    updated: "2026-11-02",
+    updated: "2026-11-04",
   },
 ];

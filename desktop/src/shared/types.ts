@@ -233,7 +233,6 @@ export interface Proxy {
   latencyMs: number | null;
   lastTestedAt: number | null;
   lastError: string | null;
-  accountId: string | null;
   createdAt: number;
   rev: number;
 }

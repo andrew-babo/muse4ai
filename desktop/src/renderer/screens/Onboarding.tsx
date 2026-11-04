@@ -99,7 +99,7 @@ export function Onboarding() {
           {step === 2 && (
             <div className="flex flex-col gap-4">
               <h2 className="text-lg font-semibold text-ink">{t("Thêm proxy")}</h2>
-              <p className="text-base text-ink-2">{t("Mỗi tài khoản Muse dùng một proxy riêng. {value}", { value: healthy ? t("Đang có {healthy} proxy khoẻ.", { healthy }) : "" })}</p>
+              <p className="text-base text-ink-2">{t("Mỗi tài khoản Muse đi qua một proxy (nên dùng proxy riêng). {value}", { value: healthy ? t("Đang có {healthy} proxy khoẻ.", { healthy }) : "" })}</p>
               <ProxySettings compact />
               <div className="flex justify-between">
                 <Button variant="ghost" onClick={() => void go(1)}>

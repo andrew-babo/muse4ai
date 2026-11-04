@@ -332,11 +332,15 @@ describe("accounts and proxies", () => {
     expect(() => h.coord.addAccount({ alias: "Mây", avatar: 0 })).toThrow(/proxy/i);
   });
 
-  it("AC-PRX-02: a proxy used by A cannot be assigned to B", async () => {
+  it("AC-PRXS-02 (replaces AC-PRX-02): a proxy used by A may be given to B as well", async () => {
     h = makeHarness();
     const [A, B] = await seedAccounts(h, ["Mây", "Sương"]);
     const pA = h.repo.getAccount(A)!.proxyId!;
-    await expect(h.coord.setAccountProxy(B, pA)).rejects.toThrow("Proxy đang dùng cho Mây");
+    const pB = h.repo.getAccount(B)!.proxyId!;
+    const r = await h.coord.setAccountProxy(B, pA);
+    expect(r.changed).toBe(true);
+    expect(h.repo.accountsOnProxy(pA).map((a) => a.alias).sort()).toEqual(["Mây", "Sương"]);
+    expect(h.repo.accountsOnProxy(pB)).toEqual([]);
   });
 
   it("AC-ACC-08: removing A returns unsent jobs, keeps assets, frees the proxy", async () => {
@@ -351,7 +355,7 @@ describe("accounts and proxies", () => {
     const r = await h.coord.removeAccount(A);
     expect(r.removed).toBe(true);
     expect(pinned.map((id) => job(h, id).accountPref)).toEqual(["auto", "auto"]);
-    expect(h.repo.getProxy(proxyId)!.accountId).toBeNull();
+    expect(h.repo.accountsOnProxy(proxyId)).toEqual([]);
     expect(h.repo.assetsForJob(done)).toHaveLength(1);
     expect(h.repo.getAccount(A)).toBeNull();
   });

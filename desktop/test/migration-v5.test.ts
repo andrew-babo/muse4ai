@@ -19,7 +19,7 @@ function v4Store(seed: (db: import("node:sqlite").DatabaseSync) => void) {
 
 describe("Build 2.0 R112 — store schema 4 → 5 (AC-PATH-01, AC-OPS-01)", () => {
   it("backs up first, keeps every row, and applies the Build 2.0 defaults (auto/10/2, total 40, UI pages = old total)", () => {
-    expect(SCHEMA_VERSION).toBe(6);
+    expect(SCHEMA_VERSION).toBe(7);
     const { file, backups } = v4Store((db) => {
       db.prepare("INSERT INTO accounts(id,alias,alias_key,state,capabilities,created_at,rev) VALUES('a1','Mây','mây','ready','{}',1,1),('a2','Sương','sương','needs_login','{}',1,2),('a3','Gió','gió','paused','{}',1,3)").run();
       const ins = db.prepare("INSERT INTO jobs(id,kind,mode,prompt,state,created_at,updated_at,rev) VALUES(?,?,?,?,?,?,?,?)");

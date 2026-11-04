@@ -8,7 +8,8 @@ import { libraryRelParts, sanitizeFolderName } from "../src/shared/naming";
 import { maskIp, parseProxyList, proxyEntryWhere } from "../src/shared/proxyParse";
 import { redact, registerSecret } from "../src/shared/redact";
 import { downloadRetryDelay, preSubmitRetryDelay } from "../src/shared/retry";
-import { schedule, suggestProxy, type SchedAccount } from "../src/shared/scheduler";
+import { schedule, type SchedAccount } from "../src/shared/scheduler";
+import { suggestProxy } from "../src/shared/proxyShare";
 import { sniffMediaMime, validateAlias, validatePrompt, validateReference } from "../src/shared/validate";
 import { PNG_1PX, fakeMp4 } from "../src/main/adapter/fake";
 
@@ -43,16 +44,12 @@ describe("aliases — AC-ACC-01", () => {
   });
 });
 
-describe("proxy suggestion — AC-ACC-03", () => {
-  it("suggests the healthy unassigned proxy with lowest latency", () => {
-    const p = suggestProxy([
-      { id: "slow", health: "healthy", accountId: null, latencyMs: 340 },
-      { id: "fast", health: "healthy", accountId: null, latencyMs: 120 },
-      { id: "taken", health: "healthy", accountId: "x", latencyMs: 10 },
-      { id: "bad", health: "failed", accountId: null, latencyMs: 5 },
-    ]);
+describe("proxy suggestion — AC-ACC-03 (Build 3.2: who uses a proxy comes from the accounts)", () => {
+  it("suggests the healthy proxy nobody uses with the lowest latency", () => {
+    const px = (id: string, health: string, latencyMs: number) => ({ id, label: id, health, latencyMs });
+    const p = suggestProxy([px("slow", "healthy", 340), px("fast", "healthy", 120), px("taken", "healthy", 10), px("bad", "failed", 5)], [{ id: "x", alias: "Mây", proxyId: "taken", createdAt: 1 }]);
     expect(p?.id).toBe("fast");
-    expect(suggestProxy([{ id: "bad", health: "failed", accountId: null, latencyMs: 5 }])).toBeNull();
+    expect(suggestProxy([px("bad", "failed", 5)], [])).toBeNull();
   });
 });
 

@@ -6,7 +6,7 @@ import path from "node:path";
 export type SqliteModule = typeof import("node:sqlite");
 export type Database = import("node:sqlite").DatabaseSync;
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 /** WAL + synchronous=NORMAL: a committed write survives the app process being killed (AC-JOB-04). */
 export const CONNECTION_PRAGMAS = "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=OFF; PRAGMA busy_timeout=5000;";
@@ -171,6 +171,38 @@ CREATE TABLE IF NOT EXISTS oauth_consents(
   scope TEXT NOT NULL DEFAULT '[]', challenge TEXT NOT NULL DEFAULT '', method TEXT NOT NULL DEFAULT 'S256',
   state TEXT, pairing TEXT NOT NULL, tries INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, decided_at INTEGER, decision TEXT);
+`,
+  // Build 3.2 (R142): a proxy may serve several accounts. `accounts.proxy_id` becomes the only record of who uses a
+  // proxy: the table is rebuilt without its UNIQUE constraint and `proxies` without its duplicate `account_id`. An
+  // account that lost its pointer but is still named by its old proxy row gets it back; dangling pointers are cleared.
+  7: `
+UPDATE accounts SET proxy_id = (SELECT p.id FROM proxies p WHERE p.account_id = accounts.id)
+  WHERE proxy_id IS NULL AND EXISTS (SELECT 1 FROM proxies p WHERE p.account_id = accounts.id);
+UPDATE accounts SET proxy_id = NULL WHERE proxy_id IS NOT NULL AND proxy_id NOT IN (SELECT id FROM proxies);
+CREATE TABLE accounts_v7(
+  id TEXT PRIMARY KEY, alias TEXT NOT NULL, alias_key TEXT NOT NULL UNIQUE, avatar INTEGER NOT NULL DEFAULT 0,
+  state TEXT NOT NULL, state_until INTEGER, state_note TEXT, proxy_id TEXT, capabilities TEXT NOT NULL DEFAULT '{}',
+  today_count INTEGER NOT NULL DEFAULT 0, today_date TEXT NOT NULL DEFAULT '', quota TEXT, last_active_at INTEGER,
+  fail_times TEXT NOT NULL DEFAULT '[]', created_at INTEGER NOT NULL, rev INTEGER NOT NULL,
+  exec_mode TEXT NOT NULL DEFAULT 'auto', max_concurrent INTEGER NOT NULL DEFAULT 10, ui_max_concurrent INTEGER NOT NULL DEFAULT 2);
+INSERT INTO accounts_v7(id, alias, alias_key, avatar, state, state_until, state_note, proxy_id, capabilities, today_count,
+  today_date, quota, last_active_at, fail_times, created_at, rev, exec_mode, max_concurrent, ui_max_concurrent)
+  SELECT id, alias, alias_key, avatar, state, state_until, state_note, proxy_id, capabilities, today_count,
+  today_date, quota, last_active_at, fail_times, created_at, rev, exec_mode, max_concurrent, ui_max_concurrent FROM accounts;
+DROP TABLE accounts;
+ALTER TABLE accounts_v7 RENAME TO accounts;
+CREATE INDEX IF NOT EXISTS accounts_proxy ON accounts(proxy_id);
+CREATE TABLE proxies_v7(
+  id TEXT PRIMARY KEY, label TEXT NOT NULL, scheme TEXT NOT NULL, host TEXT NOT NULL, port INTEGER NOT NULL,
+  secret_ref TEXT, has_auth INTEGER NOT NULL DEFAULT 0, health TEXT NOT NULL DEFAULT 'untested', exit_ip_masked TEXT,
+  country TEXT, latency_ms INTEGER, last_tested_at INTEGER, last_error TEXT,
+  created_at INTEGER NOT NULL, rev INTEGER NOT NULL, UNIQUE(host, port));
+INSERT INTO proxies_v7(id, label, scheme, host, port, secret_ref, has_auth, health, exit_ip_masked, country, latency_ms,
+  last_tested_at, last_error, created_at, rev)
+  SELECT id, label, scheme, host, port, secret_ref, has_auth, health, exit_ip_masked, country, latency_ms,
+  last_tested_at, last_error, created_at, rev FROM proxies;
+DROP TABLE proxies;
+ALTER TABLE proxies_v7 RENAME TO proxies;
 `,
 };
 

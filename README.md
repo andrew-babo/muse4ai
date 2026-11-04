@@ -21,7 +21,7 @@ with no cloud middleman and no per-seat fee.
 ![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-1A50D7?style=flat-square)
 ![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-5F5A52?style=flat-square)
 ![740 tests](https://img.shields.io/badge/tests-740-2D664D?style=flat-square)
-![v2.0.0-beta.31](https://img.shields.io/badge/version-2.0.0--beta.31-B4762B?style=flat-square)
+![v2.0.0-beta.32](https://img.shields.io/badge/version-2.0.0--beta.32-B4762B?style=flat-square)
 
 </div>
 

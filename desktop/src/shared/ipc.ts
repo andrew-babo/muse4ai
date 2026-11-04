@@ -221,6 +221,8 @@ export const COMMANDS = {
     replyFiles: z.array(z.object({ name: z.string().min(1).max(200), mime: z.string().min(1).max(100), text: z.string().max(100_000) })).max(5).optional(),
   }),
   "__test.vibes": z.object({ accountId: id, steps: z.array(z.record(z.string(), z.unknown())).max(20).optional(), me: z.array(z.unknown()).max(10).optional() }),
+  /** Build 3.2 E2E: show the account's real Muse window (the takeover path) on a page, hide it, read or close its extra pages. */
+  "__test.extra": z.object({ accountId: id, op: z.enum(["open", "state", "hide", "close"]), url: z.string().max(500).optional(), keepTabs: z.boolean().optional() }),
 } as const;
 
 export type CommandName = keyof typeof COMMANDS;

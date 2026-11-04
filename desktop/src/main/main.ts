@@ -799,6 +799,17 @@ async function boot(): Promise<void> {
     openUrl: (url) => (!/^https?:\/\//.test(url) ? Promise.resolve() : TEST ? (logger.log("info", "app", "openUrl.test", { host: new URL(url).host }), Promise.resolve()) : shell.openExternal(url)),
     showRoute: (route) => showWindow(route),
     activateToast: (route, fromThisRun) => onToastActivation(launchArgument(route, fromThisRun ? RUN_ID : "olderrun0"), "test"),
+    testExtra: async (accountId, op, arg) => {
+      if (op === "open") {
+        accounts.showTakeover(accountId, "muse");
+        await accounts
+          .page(accountId)
+          .load(String(arg.url ?? "about:blank"), 20_000)
+          .catch(() => undefined);
+      } else if (op === "hide") accounts.hideTakeover(accountId);
+      else if (op === "close") accounts.extra.closeAll(accountId, !!arg.keepTabs);
+      return accounts.extra.snapshot(accountId);
+    },
     testScript: (accountId, steps) => {
       adapterFor(accountId);
       fakeCfgs.get(accountId)?.script?.push(...(steps as unknown as FakeStep[]));

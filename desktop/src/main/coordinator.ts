@@ -34,7 +34,8 @@ import { AFTER_SUBMIT, assertTransition, ERROR_LABEL, isRetryableError, JOB_LABE
 import { parseProxyList, maskIp, type ProxyImportResult } from "../shared/proxyParse";
 import { redact, registerSecret } from "../shared/redact";
 import { downloadRetryDelay, preSubmitRetryDelay } from "../shared/retry";
-import { capKey, schedule, suggestProxy, type SchedAccount } from "../shared/scheduler";
+import { capKey, schedule, type SchedAccount } from "../shared/scheduler";
+import { suggestProxy } from "../shared/proxyShare";
 import { clampInt, EXEC_DEFAULTS, GLOBAL_CONCURRENCY_RANGE, inRange, MAX_CONCURRENT_RANGE, SELF_CHECK_FIRST_MS, UI_MAX_RANGE, UI_PAGES_RANGE, UI_PAGE_MIN_FREE_BYTES, type ExecMode, type ExecPath, type HttpReason, type BridgeStatus, EXEC_REASON_LABEL } from "../shared/execution";
 import { anyPathSupports, jobNeeds, type AttachmentNeed } from "../shared/pathCapability";
 import { CHAT_ATTACH_MAX, CHAT_ATTACH_TOTAL_MAX, validateChatPrompt } from "../shared/chat";
@@ -2096,16 +2097,12 @@ export class Coordinator {
     const v = validateAlias(input.alias, accounts.map((a) => a.alias));
     if (!v.ok) throw new CommandError(v.reason);
     const proxies = this.repo.listProxies();
-    const proxy = input.proxyId ? proxies.find((p) => p.id === input.proxyId) : suggestProxy(proxies);
+    // Build 3.2 R143: a proxy another account uses may be chosen on purpose; the automatic pick is only ever an unused one.
+    const proxy = input.proxyId ? proxies.find((p) => p.id === input.proxyId) : suggestProxy(proxies, accounts);
+    if (!proxy && input.proxyId) throw new CommandError("Không còn proxy này", "not_found");
     if (!proxy) throw new CommandError("Chưa có proxy khoẻ nào trống — nhập proxy trước", "no_proxy");
     if (proxy.health !== "healthy") throw new CommandError("Proxy chưa được kiểm hoặc đang lỗi", "no_proxy");
-    if (proxy.accountId) throw new CommandError(`Proxy đang dùng cho ${this.repo.getAccount(proxy.accountId)?.alias ?? "tài khoản khác"}`);
-    const acc = this.repo.tx(() => {
-      const a = this.repo.insertAccount({ alias: v.value, avatar: input.avatar, proxyId: proxy.id, now: this.now() });
-      this.repo.updateProxy(proxy.id, { accountId: a.id });
-      return a;
-    });
-    this.d.emit("proxy", this.repo.getProxy(proxy.id));
+    const acc = this.repo.insertAccount({ alias: v.value, avatar: input.avatar, proxyId: proxy.id, now: this.now() });
     this.emitAccount(acc.id);
     return this.accountView(acc.id)!;
   }
@@ -2173,7 +2170,7 @@ export class Coordinator {
     this.mustAccount(id);
     const p = this.repo.getProxy(proxyId);
     if (!p) throw new CommandError("Không còn proxy này", "not_found");
-    if (p.accountId && p.accountId !== id) throw new CommandError(`Proxy đang dùng cho ${this.repo.getAccount(p.accountId)?.alias ?? "tài khoản khác"}`); // AC-PRX-02
+    // Build 3.2 R143: a proxy other accounts use is accepted (shared on purpose); AC-PRX-02 of Build 1.0 no longer applies.
     const held = this.leases.get(id);
     // A change already asked “Dừng chờ” keeps its lock until the answer (this call) or the hold lapses.
     const resuming = held?.kind === "proxy" && held.until !== undefined;
@@ -2228,12 +2225,7 @@ export class Coordinator {
 
   private applyProxyChange(id: string, proxyId: string): void {
     const acc = this.mustAccount(id);
-    this.repo.tx(() => {
-      if (acc.proxyId && acc.proxyId !== proxyId) this.repo.updateProxy(acc.proxyId, { accountId: null });
-      this.repo.updateProxy(proxyId, { accountId: id });
-      this.repo.updateAccount(id, { proxyId });
-    });
-    for (const pid of [acc.proxyId, proxyId]) if (pid) this.d.emit("proxy", this.repo.getProxy(pid));
+    this.repo.updateAccount(id, { proxyId });
     this.d.ui.applyProxy(id);
     // The direct channel's socket was opened through the old proxy; the next connect rebuilds it on the new one.
     if (acc.proxyId !== proxyId) this.exec.forget(id);
@@ -2721,11 +2713,7 @@ export class Coordinator {
     this.leases.delete(id);
     this.exec.forget(id);
     await this.d.ui.destroy(id);
-    this.repo.tx(() => {
-      if (acc.proxyId) this.repo.updateProxy(acc.proxyId, { accountId: null });
-      this.repo.deleteAccount(id);
-    });
-    if (acc.proxyId) this.d.emit("proxy", this.repo.getProxy(acc.proxyId));
+    this.repo.deleteAccount(id);
     this.d.emit("account.deleted", { id });
     this.requestSchedule();
     return { removed: true };
@@ -2791,9 +2779,10 @@ export class Coordinator {
       lastError: r.ok ? null : redact(r.error ?? "Không kết nối được"),
     });
     this.d.emit("proxy", out);
-    if (r.ok && out.accountId) {
-      const a = this.repo.getAccount(out.accountId);
-      if (a?.state === "proxy_error") {
+    // R147: every account that stopped on this proxy comes back once it answers again.
+    if (r.ok) {
+      for (const a of this.repo.accountsOnProxy(id)) {
+        if (a.state !== "proxy_error") continue;
         this.setAccount(a.id, { state: "ready", stateNote: null });
         void this.checkSession(a.id, true);
       }
@@ -2819,31 +2808,25 @@ export class Coordinator {
   removeProxy(id: string): void {
     const p = this.repo.getProxy(id);
     if (!p) throw new CommandError("Không còn proxy này", "not_found");
-    if (p.accountId) {
-      const a = this.repo.getAccount(p.accountId);
-      if (a && (this.leases.has(a.id) || this.runsOn(a.id).length || a.state === "busy" || a.state === "logging_in" || a.state === "takeover")) {
-        throw new CommandError(`Proxy đang dùng cho ${a.alias} khi tài khoản đang chạy`, "busy");
-      }
-      if (a) this.repo.updateAccount(a.id, { proxyId: null });
-      if (a) this.emitAccount(a.id);
-    }
+    const users = this.repo.accountsOnProxy(id);
+    const running = users.find((a) => this.leases.has(a.id) || this.runsOn(a.id).length || a.state === "busy" || a.state === "logging_in" || a.state === "takeover");
+    if (running) throw new CommandError(`Proxy đang dùng cho ${running.alias} khi tài khoản đang chạy`, "busy");
+    if (users.length) this.repo.tx(() => users.forEach((a) => this.repo.updateAccount(a.id, { proxyId: null })));
+    for (const a of users) this.emitAccount(a.id);
     const ref = this.repo.proxySecretRef(id);
     if (ref) this.d.vault.delete(ref);
     this.repo.deleteProxy(id);
     this.d.emit("proxy.deleted", { id });
   }
 
+  /** R147 — takes the proxy off every account on it, or off none when one of them is working. */
   unassignProxy(id: string): void {
-    const p = this.repo.getProxy(id);
-    if (!p?.accountId) return;
-    const a = this.repo.getAccount(p.accountId);
-    if (a && (this.leases.has(a.id) || this.runsOn(a.id).length)) throw new CommandError("Tài khoản đang làm việc", "busy");
-    this.repo.tx(() => {
-      this.repo.updateProxy(id, { accountId: null });
-      if (a) this.repo.updateAccount(a.id, { proxyId: null });
-    });
-    this.d.emit("proxy", this.repo.getProxy(id));
-    if (a) this.emitAccount(a.id);
+    if (!this.repo.getProxy(id)) return;
+    const users = this.repo.accountsOnProxy(id);
+    if (!users.length) return;
+    if (users.some((a) => this.leases.has(a.id) || this.runsOn(a.id).length)) throw new CommandError("Tài khoản đang làm việc", "busy");
+    this.repo.tx(() => users.forEach((a) => this.repo.updateAccount(a.id, { proxyId: null })));
+    for (const a of users) this.emitAccount(a.id);
   }
 
   // ======================================================== settings & misc

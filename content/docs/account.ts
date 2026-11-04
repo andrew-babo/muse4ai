@@ -11,8 +11,8 @@ export const DOCS_ACCOUNT: DocArticle[] = [
       vi: "Thêm tài khoản Muse",
     },
     summary: {
-      en: "Add a Muse account with its own proxy, sign in yourself, and check that the account is ready to accept jobs.",
-      vi: "Thêm tài khoản Muse với proxy riêng, tự đăng nhập trong cửa sổ Muse và kiểm tra tài khoản đã sẵn sàng nhận việc.",
+      en: "Add a Muse account with a proxy, sign in yourself, and check that the account is ready to accept jobs.",
+      vi: "Thêm tài khoản Muse với một proxy, tự đăng nhập trong cửa sổ Muse và kiểm tra tài khoản đã sẵn sàng nhận việc.",
     },
     before: [
       {
@@ -24,8 +24,8 @@ export const DOCS_ACCOUNT: DocArticle[] = [
         vi: "Bạn truy cập được tài khoản Muse và phương thức xác minh của tài khoản. Nên dùng tài khoản phụ.",
       },
       {
-        en: "Have a working, unassigned proxy. Each account uses its own proxy.",
-        vi: "Chuẩn bị proxy hoạt động, chưa gán cho tài khoản khác. Mỗi tài khoản dùng proxy riêng.",
+        en: "Have a working proxy. A separate proxy for each account is best; accounts can share one, but then they go out through the same IP address.",
+        vi: "Chuẩn bị proxy hoạt động. Tốt nhất mỗi tài khoản một proxy riêng; dùng chung được, nhưng các tài khoản sẽ ra cùng một địa chỉ IP.",
       },
     ],
     steps: [
@@ -46,8 +46,8 @@ export const DOCS_ACCOUNT: DocArticle[] = [
           vi: "2. Gán proxy",
         },
         body: {
-          en: "Choose an available healthy proxy. If none is available, import and test one first. A proxy failure stops this account; the app does not switch it to a direct connection.",
-          vi: "Chọn proxy khoẻ còn trống. Nếu chưa có, hãy chọn Nhập proxy và kiểm tra trước. Khi proxy lỗi, tài khoản dừng; app không tự chuyển sang kết nối trực tiếp.",
+          en: "Each proxy in the list shows “Not in use” or which accounts already use it, unused ones first. The app pre-selects an unused healthy proxy; to share one, click it and read the short note. If there is no healthy proxy, import and test one first. A proxy failure stops every account on it; the app does not switch to a direct connection.",
+          vi: "Mỗi proxy trong danh sách ghi “Chưa ai dùng” hoặc tên các tài khoản đang dùng, proxy chưa dùng xếp trước. App chọn sẵn một proxy khoẻ chưa ai dùng; muốn dùng chung thì bấm vào proxy đó và đọc dòng nhắc. Nếu chưa có proxy khoẻ, hãy Nhập proxy và kiểm tra trước. Khi proxy lỗi, mọi tài khoản trên proxy đó dừng; app không tự chuyển sang kết nối trực tiếp.",
         },
       },
       {
@@ -56,8 +56,8 @@ export const DOCS_ACCOUNT: DocArticle[] = [
           vi: "3. Tự đăng nhập Muse",
         },
         body: {
-          en: "Continue to sign-in. In the separate Muse window, enter your account details and complete Muse's verification yourself. The app does not store passwords or verification codes.",
-          vi: "Chọn Tiếp tục đăng nhập. Trong cửa sổ Muse riêng, nhập thông tin tài khoản và tự hoàn tất xác minh của Muse. App không lưu mật khẩu hay mã xác nhận.",
+          en: "Continue to sign-in. In the separate Muse window, enter your account details and complete Muse's verification yourself. If Muse opens another page (for example Meta Accounts Center or a tool's Connect button), it shows in its own small window or a tab, through the same proxy. The app does not store passwords or verification codes.",
+          vi: "Chọn Tiếp tục đăng nhập. Trong cửa sổ Muse riêng, nhập thông tin tài khoản và tự hoàn tất xác minh của Muse. Nếu Muse mở thêm trang (ví dụ Trung tâm tài khoản Meta hay nút Kết nối của một công cụ), trang đó hiện trong cửa sổ nhỏ hoặc một tab riêng, đi cùng proxy. App không lưu mật khẩu hay mã xác nhận.",
         },
       },
       {
@@ -79,12 +79,22 @@ export const DOCS_ACCOUNT: DocArticle[] = [
     troubleshoot: [
       {
         q: {
-          en: "There is no healthy proxy available. What should I do?",
-          vi: "Không có proxy khoẻ còn trống thì làm sao?",
+          en: "Every proxy is already in use. What should I do?",
+          vi: "Proxy nào cũng đang có tài khoản dùng thì làm sao?",
         },
         a: {
-          en: "Open Settings › Proxy to add and test a proxy. A proxy assigned to another account is not available for this account.",
-          vi: "Mở Cài đặt › Proxy để thêm và kiểm tra proxy. Proxy đã gán cho tài khoản khác sẽ không dùng được cho tài khoản này.",
+          en: "You can pick one and share it — the list shows who already uses it. For separate IP addresses, open Settings › Proxy to add and test another proxy.",
+          vi: "Anh có thể chọn một proxy để dùng chung — danh sách ghi rõ ai đang dùng. Muốn mỗi tài khoản một địa chỉ IP riêng thì mở Cài đặt › Proxy để thêm và kiểm tra proxy mới.",
+        },
+      },
+      {
+        q: {
+          en: "I clicked Connect (or opened Meta Accounts Center) and a new page appeared. Where is it?",
+          vi: "Tôi bấm Kết nối (hoặc mở Trung tâm tài khoản Meta) và có trang mới. Trang đó nằm đâu?",
+        },
+        a: {
+          en: "A small sign-in window opens over the Muse window and closes itself when you finish. Other pages open in one extra window; with two or more pages, a thin row of tabs appears at the top (Ctrl+W closes a tab, Ctrl+Tab switches). They only open while you use the account's window, always through its proxy.",
+          vi: "Cửa sổ đăng nhập nhỏ mở ngay giữa cửa sổ Muse và tự đóng khi bạn xác nhận xong. Trang khác mở trong một cửa sổ phụ; từ hai trang trở lên sẽ có hàng tab mảnh phía trên (Ctrl+W đóng tab, Ctrl+Tab chuyển tab). Các trang này chỉ mở khi bạn đang dùng cửa sổ của tài khoản, luôn đi qua proxy của nó.",
         },
       },
       {
@@ -110,6 +120,6 @@ export const DOCS_ACCOUNT: DocArticle[] = [
     ],
     related: ["first-open", "accounts-and-limits", "proxies-and-modes", "create-image"],
     appRoute: "/accounts",
-    updated: "2026-11-02",
+    updated: "2026-11-04",
   },
 ];

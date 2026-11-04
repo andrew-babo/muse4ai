@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { COMMANDS, SETTINGS_VALIDATORS, type CommandName, type CommandResult } from "../shared/ipc";
 import { redact } from "../shared/redact";
+import { suggestProxy } from "../shared/proxyShare";
 import { publicJob } from "../shared/jobMachine";
 import { canOpenFile, safeHttpUrl } from "../shared/chat";
 import type { Settings, Site } from "../shared/types";
@@ -46,6 +47,8 @@ export interface ShellOps {
   /** Same function a Windows toast activation calls, for a toast of this run or of an older run (AC-VIB-10). */
   activateToast?(route: string, fromThisRun: boolean): void;
   metrics?(): unknown;
+  /** Test mode (Build 3.2): the account's real Muse window and its popups/tabs — same functions takeover and sign-in use. */
+  testExtra?(accountId: string, op: "open" | "state" | "hide" | "close", arg: { url?: string; keepTabs?: boolean }): Promise<unknown>;
   flushEvents?(): void;
   /** Opens an http(s) URL in the default browser (only URLs built by the main process). */
   openUrl?(url: string): Promise<void>;
@@ -290,8 +293,8 @@ export class IpcDispatcher {
       case "account.exitIp":
         return c.exitIp(a.id);
       case "account.suggestProxy": {
-        const free = c.repo.listProxies().find((p) => !p.accountId && p.health === "healthy") ?? c.repo.listProxies().find((p) => !p.accountId && p.health !== "failed");
-        return free ? { proxyId: free.id } : { proxyId: null };
+        const free = suggestProxy(c.repo.listProxies(), c.repo.listAccounts());
+        return { proxyId: free?.id ?? null };
       }
 
       case "account.checkVibes":
@@ -524,6 +527,8 @@ export class IpcDispatcher {
         if (a.text !== undefined) this.sh.testQuota?.(String(a.accountId), (a.text as string | null) ?? null, a.delayMs as number | undefined);
         if (typeof a.ageMs === "number") c.ageQuotaForTest(String(a.accountId), a.ageMs);
         return null;
+      case "__test.extra":
+        return (await this.sh.testExtra?.(String(a.accountId), a.op as "open" | "state" | "hide" | "close", { url: a.url as string | undefined, keepTabs: a.keepTabs as boolean | undefined })) ?? null;
       case "__test.seed":
         return seedDataset(c.repo, c.settings().libraryDir, { jobs: Number(a.jobs), assets: Number(a.assets) });
     }
