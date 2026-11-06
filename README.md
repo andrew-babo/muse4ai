@@ -198,6 +198,17 @@ npm run typecheck   # strict TypeScript
 npm run package:win # Windows ZIP + installer inputs
 ```
 
+## Quality checks
+
+Every push, and every Monday at 02:00 UTC, GitHub Actions re-runs the whole suite:
+**774 tests**, a type check, a dependency vulnerability scan, a secret scan across the
+full git history, and live checks against the public endpoints. If a weekly run fails,
+an issue is opened automatically.
+
+- Audit report: [docs/audit/2026-11-06.md](docs/audit/2026-11-06.md)
+- Build specs, plans and lab evidence: [docs/build-3.2/](docs/build-3.2/)
+- Reporting a vulnerability privately: [SECURITY.md](SECURITY.md)
+
 ## Honest notes
 
 - **Unofficial.** Muse4AI is an independent project. It is **not affiliated with,

@@ -197,6 +197,17 @@ npm run typecheck   # TypeScript kiểm tra chặt
 npm run package:win # đóng gói ZIP + bộ cài Windows
 ```
 
+## Kiểm tra chất lượng
+
+Mỗi lần đẩy code và mỗi thứ Hai 02:00 UTC (09:00 giờ VN), GitHub Actions chạy lại
+toàn bộ: **774 test**, kiểm lỗi code, quét lỗ hổng thư viện, quét khoá và mật khẩu
+trong toàn bộ lịch sử kho, cùng gọi thật vào các endpoint công khai. Nếu lần chạy
+hằng tuần bị lỗi, GitHub tự mở một issue.
+
+- Báo cáo audit: [docs/audit/2026-11-06.md](docs/audit/2026-11-06.md)
+- Spec, kế hoạch và bằng chứng phòng thử: [docs/build-3.2/](docs/build-3.2/)
+- Báo lỗ hổng bảo mật một cách kín đáo: [SECURITY.md](SECURITY.md)
+
 ## Nói thẳng
 
 - **Không chính thức.** Muse4AI là dự án độc lập, **không liên kết, không được Meta
