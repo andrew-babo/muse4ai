@@ -14,6 +14,11 @@ param(
   [string]$Lang = '',
   [string]$InstallRoot = (Join-Path $env:LOCALAPPDATA 'Programs\Muse4AI')
 )
+# Launched from PowerShell 7 (or an EXE started from it), Windows PowerShell inherits a module path without its
+# own modules, so Get-FileHash / Get-CimInstance would be missing. Use Windows PowerShell's standard module path.
+if ($PSVersionTable.PSVersion.Major -le 5) {
+  $env:PSModulePath = @((Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'WindowsPowerShell\Modules'), (Join-Path $env:ProgramFiles 'WindowsPowerShell\Modules'), (Join-Path $PSHOME 'Modules')) -join ';'
+}
 $ErrorActionPreference = 'Stop'
 
 if (-not $Lang) {
