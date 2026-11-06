@@ -74,7 +74,7 @@ begin
     WizardForm.StatusLabel.Caption := CustomMessage('Working');
     ExtractTemporaryFiles('*');
     ResultFile := ExpandConstant('{tmp}\result.txt');
-    Args := '-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\install.ps1') + '" -NoLaunch -Lang ' + ActiveLanguage;
+    Args := '-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\install.ps1') + '" -NoLaunch -CloseRunning -ResultFile "' + ResultFile + '" -Lang ' + ActiveLanguage;
     if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Args,
       ExpandConstant('{tmp}'), SW_HIDE, ewWaitUntilTerminated, ExitCode) then
       RaiseException(CustomMessage('NoPowerShell'));

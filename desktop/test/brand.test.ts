@@ -47,6 +47,13 @@ describe("Brand: Muse4AI", () => {
     expect(read("installer/uninstall.ps1")).toContain("Join-Path $env:APPDATA 'MuseStudio'");
   });
 
+  it("the EXE asks install.ps1 to close a running copy and to write its failure reason for the error dialog", () => {
+    const iss = read("installer/setup.iss");
+    const args = iss.split("\n").find((l) => l.includes("install.ps1") && l.includes("Args :="))!;
+    expect(args).toContain("-CloseRunning");
+    expect(args).toContain("-ResultFile \"' + ResultFile + '\"");
+  });
+
   it("no shipped surface still carries the old two-word name", () => {
     const hits = [...walk("src"), ...walk("installer"), ...walk("scripts")].filter((f) => read(f).includes("Muse Studio"));
     expect(hits).toEqual([]);
