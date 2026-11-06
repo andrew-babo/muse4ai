@@ -1,0 +1,12 @@
+# Gitleaks config: default rules + reviewed false positives only.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Reviewed fake test canaries and job idempotency keys (not secrets)"
+regexes = [
+  '''CANARY-TUN-8842-[A-Za-z0-9]+''',
+  '''OPS05-kin-dao''',
+  '''^b3-[a-z0-9-]+$''',
+  '''^wow4-(vi|en)-testimonial$''',
+]

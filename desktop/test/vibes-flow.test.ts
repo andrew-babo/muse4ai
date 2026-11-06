@@ -219,7 +219,7 @@ describe("AC-VIB-06 / 07 / 09 scheduling with one job per account", () => {
   });
 
   it("AC-VIB-09: while A runs a Muse job its Vibes job waits; then it runs (never two at once)", async () => {
-    const [A] = await setup(["A"], { cfg: () => ({ generateDelayMs: 60 }) });
+    const [A] = await setup(["A"], { cfg: () => ({ generateDelayMs: 1_000 }) });
     const [muse] = h.coord.createJobs(textJob("ảnh", { kind: "video" }));
     h.coord.runScheduler();
     await flush(2);

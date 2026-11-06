@@ -1,0 +1,116 @@
+name: Audit
+
+# Runs on every push / pull request and once a week (Monday 02:00 UTC = 09:00 Vietnam).
+# A failed weekly run opens (or updates) one GitHub issue so problems are seen and fixed fast.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests and type check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Type check
+        run: npm run typecheck
+      - name: Desktop test suite
+        run: npm test
+
+  dependencies:
+    name: Dependency vulnerabilities
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Full report (all packages, informational)
+        run: npm audit || true
+      - name: Shipped packages must have no high or critical advisories
+        run: npm audit --omit=dev --audit-level=high
+
+  secrets:
+    name: Leaked keys and passwords
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks (full history)
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks detect --source . --redact --no-banner --exit-code 1
+
+  live:
+    name: Live service check
+    # Real requests against the public website and the public API endpoint; never sends a job.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Public endpoints answer and protected ones refuse anonymous callers
+        run: |
+          set -u
+          fail=0
+          check() { # url expected-status
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$1")
+            if [ "$code" = "$2" ]; then echo "PASS $code $1"; else echo "FAIL $code (want $2) $1"; fail=1; fi
+          }
+          check https://muse4ai.andrewbabo.com/ 200
+          check https://muse4ai.andrewbabo.com/vi 200
+          check https://muse4ai.andrewbabo.com/download 200
+          check https://muse4ai.andrewbabo.com/llms.txt 200
+          check https://muse4ai.andrewbabo.com/sitemap.xml 200
+          check https://muse.mailera.app/v1/health 200
+          check https://muse.mailera.app/.well-known/oauth-authorization-server 200
+          check https://muse.mailera.app/.well-known/oauth-protected-resource 200
+          check https://muse.mailera.app/v1/jobs 401
+          hdr=$(curl -s -D - -o /dev/null -X POST -H 'content-type: application/json' -d '{}' --max-time 20 https://muse.mailera.app/mcp)
+          if echo "$hdr" | grep -qi '^www-authenticate:.*resource_metadata='; then echo "PASS MCP asks for OAuth"; else echo "FAIL MCP missing OAuth challenge"; fail=1; fi
+          exit $fail
+
+  report:
+    name: Open an issue when the weekly audit fails
+    needs: [tests, dependencies, secrets, live]
+    if: always() && github.event_name == 'schedule' && contains(needs.*.result, 'failure')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Weekly audit failed"
+          body="The scheduled audit failed on $(date -u +%F). Details: $RUN_URL"
+          gh label create audit --color B60205 --description "Automated weekly audit" 2>/dev/null || true
+          num=$(gh issue list --label audit --state open --json number -q '.[0].number')
+          if [ -n "$num" ]; then gh issue comment "$num" --body "$body"; else gh issue create --title "$title" --label audit --body "$body"; fi

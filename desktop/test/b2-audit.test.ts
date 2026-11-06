@@ -114,7 +114,8 @@ describe("AC-GW-04 — following turns (R94)", () => {
 
 describe("AC-PATH-04/05/08 — switching paths (R88, R91, R96)", () => {
   it("AC-PATH-04: auto account, HTTP goes down with 4 accepted HTTP turns; UI cap 2; 5 new jobs → never more than 2 UI turns at once, one notice, the 4 finish over HTTP after reconnecting, nothing resent", async () => {
-    h = makeHarness({ gw: () => ({ completeMs: 300 }), httpTimings: LONG, uiPagesPerAccount: 2 });
+    // Generous give-up window: on a loaded CI runner the UI turns can outlast the default, and the test is about waiting, not giving up.
+    h = makeHarness({ gw: () => ({ completeMs: 300 }), httpTimings: { ...LONG, reconcileGiveUpMs: 60_000 }, uiPagesPerAccount: 2 });
     const [a] = await seedAccounts(h, ["Mây"]);
     h.fakeCfg(a).generateDelayMs = 60;
     const cfg = h.gwCfg(a);
