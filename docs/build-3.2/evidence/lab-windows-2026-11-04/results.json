@@ -1,0 +1,162 @@
+[
+ {
+  "check": "lab: beta.32 Windows build under test",
+  "ok": true,
+  "note": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+ },
+ {
+  "check": "PRXS-01 two accounts added on the same proxy",
+  "ok": true,
+  "note": "['Gió', 'Mây']"
+ },
+ {
+  "check": "PRXS-09 account card says who shares the proxy",
+  "ok": true,
+  "note": "count=1"
+ },
+ {
+  "check": "PRXS-09 unused proxy listed first, shared one says who uses it",
+  "ok": true,
+  "note": "['P02 · HTTP · US | Chưa ai dùng | 202 ms', 'P01 · HTTP · US | Đang dùng: Mây, Gió | 255 ms']"
+ },
+ {
+  "check": "PRXS-09 the unused proxy is pre-selected",
+  "ok": true,
+  "note": "aria-checked=true"
+ },
+ {
+  "check": "PRXS-09 choosing the shared proxy shows the gentle note",
+  "ok": true,
+  "note": "Proxy này đang dùng cho Mây, Gió. Dùng chung được, nhưng các tài khoản sẽ ra cùng một địa chỉ IP."
+ },
+ {
+  "check": "XWIN-09 takeover dialog shows the hint in Vietnamese and English",
+  "ok": true,
+  "note": "vi=True en=True"
+ },
+ {
+  "check": "setup: Muse window shows the test page through the account proxy",
+  "ok": true,
+  "note": "proxy_log=1"
+ },
+ {
+  "check": "XWIN-01 sized window.open opens a popup of that size",
+  "ok": true,
+  "note": "{\"title\": \"Connect a tool \\u2014 M\\u00e2y\", \"bounds\": {\"x\": 392, \"y\": 153, \"width\": 496, \"height\": 679}, \"content\": {\"x\": 400, \"y\": 184, \"width\": 480, \"height\": 640}, \"webrtc\": \"disable_non_proxied_udp\"}"
+ },
+ {
+  "check": "XWIN-01 popup is centred on the Muse window (±12 px)",
+  "ok": true,
+  "note": "dx=0 dy=0 muse={'x': 0, 'y': 62, 'w': 1280, 'h': 860}"
+ },
+ {
+  "check": "XWIN-01 window.opener works (the popup handed its result back)",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "XWIN-01 the popup closed itself (window.close)",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "XWIN-01 popup title ends with the account alias",
+  "ok": true,
+  "note": "Connect a tool — Mây"
+ },
+ {
+  "check": "XWIN-08 popup went through the account proxy, WebRTC limited",
+  "ok": true,
+  "note": "disable_non_proxied_udp"
+ },
+ {
+  "check": "XWIN-02 window.open without size → extra-pages window with one tab",
+  "ok": true,
+  "note": "{\"visible\": true, \"title\": \"Page 1 \\u2014 M\\u00e2y\", \"bounds\": {\"x\": 36, \"y\": 98, \"width\": 1180, \"height\": 820}}"
+ },
+ {
+  "check": "XWIN-02 one tab: no strip, page starts at the top",
+  "ok": true,
+  "note": "{\"id\": 1, \"title\": \"Page 1\", \"host\": \"127.0.0.1\", \"active\": true, \"bounds\": {\"x\": 0, \"y\": 0, \"width\": 1164, \"height\": 781}, \"webrtc\": \"disable_non_proxied_udp\"}"
+ },
+ {
+  "check": "XWIN-03 window title is “<page> — <alias>”",
+  "ok": true,
+  "note": "Page 1 — Mây"
+ },
+ {
+  "check": "XWIN-03 two tabs → strip shows, active page starts below it (36 px)",
+  "ok": true,
+  "note": "[{\"id\": 2, \"title\": \"Page 2\", \"host\": \"127.0.0.1\", \"active\": true, \"bounds\": {\"x\": 0, \"y\": 36, \"width\": 1164, \"height\": 745}, \"webrtc\": \"disable_non_proxied_udp\"}]"
+ },
+ {
+  "check": "XWIN-08 tabs go through the account proxy, WebRTC limited",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "XWIN-03 clicking a tab in the strip selects it",
+  "ok": true,
+  "note": "['Page 1']"
+ },
+ {
+  "check": "XWIN-03 strip shows a letter + the page title, nothing loaded from the network",
+  "ok": true,
+  "note": "['1Page 1', '1Page 2']"
+ },
+ {
+  "check": "XWIN-03 Ctrl+W sent as real keyboard input to “Page 1 — Mây”",
+  "ok": true,
+  "note": "True"
+ },
+ {
+  "check": "XWIN-03 Ctrl+W closes the active tab; one tab left → strip hides",
+  "ok": true,
+  "note": "[\"Page 2\"]"
+ },
+ {
+  "check": "XWIN-04 file:/chrome:/mailto:/ms-settings:/devtools: are refused",
+  "ok": true,
+  "note": "[True, True, True, True, True] tabs=1"
+ },
+ {
+  "check": "XWIN-02 an empty tab the page fills in later (async Connect) loads its page",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "XWIN-06 at most 8 tabs and 4 popups per account",
+  "ok": true,
+  "note": "tabs=8 popups=4 opened=[True, True, True, True, False]"
+ },
+ {
+  "check": "XWIN-07 sign-in done: popups close, tabs stay",
+  "ok": true,
+  "note": "popups=0 tabs=8"
+ },
+ {
+  "check": "XWIN-07 cancel / takeover end: everything closes",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "XWIN-07 ending takeover closes the extra pages too",
+  "ok": true,
+  "note": "before=1"
+ },
+ {
+  "check": "XWIN-05 hidden Muse window: window.open returns null, nothing opens",
+  "ok": true,
+  "note": "[True, True]"
+ },
+ {
+  "check": "isolation: the other account has no extra pages",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "renderer had no page errors",
+  "ok": true,
+  "note": ""
+ }
+]
