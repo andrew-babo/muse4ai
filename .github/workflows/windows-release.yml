@@ -48,8 +48,13 @@ jobs:
         run: npm run typecheck
       - name: Install Inno Setup compiler
         run: |
-          choco install innosetup --version=6.4.3 --allow-downgrade --force --yes --no-progress
-          if ($LASTEXITCODE -ne 0) { throw 'Inno Setup installation failed' }
+          # The runner image usually ships Inno Setup 6; install the current package only when it is missing.
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Inno Setup installation failed' }
+          }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found at $iscc" }
       - name: Build ZIP and EXE installer
         run: npm run package:setup
       - name: Smoke test installation and data preservation
