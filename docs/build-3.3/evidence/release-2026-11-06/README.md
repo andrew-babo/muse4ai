@@ -31,7 +31,8 @@ bằng cùng nguồn Inno Setup (ISCC thoát 0), tải về và khớp lại SHA
 
 ## Nâng bản thật trên VPS — để chính bộ cài đóng app
 
-`../lab/deploy_prod.py 2.0.0-beta.33 2.0.0-beta.34 <thư mục> installer` (chạy trong phiên tương tác 1):
+Script nâng bản (giữ riêng): sao lưu `data/` + `vault.json` + `ui-locale`, **không** thoát app trước, chạy Setup EXE im
+lặng trong phiên tương tác 1, rồi đọc `/v1/health`:
 
 | Giờ VPS | App đang chạy trước khi cài | Bộ cài | Còn tiến trình cũ | Kết quả |
 |---|---|---|---|---|

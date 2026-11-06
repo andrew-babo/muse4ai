@@ -9,7 +9,8 @@ import { TOAST_ACTIVATOR_CLSID } from "../src/main/toast";
 // only on Windows; their behaviour is exercised in the isolated Windows lab, these checks keep the shared values aligned.
 
 const dir = path.resolve(__dirname, "../installer");
-const read = (f: string) => fs.readFileSync(path.join(dir, f), "utf8").replace(/^\uFEFF/, "");
+// A Windows checkout may turn LF into CRLF (core.autocrlf); compare script text with LF line ends.
+const read = (f: string) => fs.readFileSync(path.join(dir, f), "utf8").replace(/^\uFEFF/, "").replace(/\r\n/g, "\n");
 const install = read("install.ps1");
 const uninstall = read("uninstall.ps1");
 const setup = read("setup.iss");

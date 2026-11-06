@@ -7,7 +7,8 @@ import pkg from "../package.json";
 
 // Build 3.3 AC-OSS-01 — the public changelog is generated from the same release list as the website.
 describe("CHANGELOG.md", () => {
-  const file = fs.readFileSync(path.resolve(__dirname, "../../CHANGELOG.md"), "utf8");
+  // A Windows checkout may turn LF into CRLF (core.autocrlf); the content, not the line ends, must match.
+  const file = fs.readFileSync(path.resolve(__dirname, "../../CHANGELOG.md"), "utf8").replace(/\r\n/g, "\n");
 
   it("matches content/site.ts RELEASES (regenerate with `bun scripts/changelog.ts`)", () => {
     expect(file).toBe(changelogMarkdown(RELEASES, SITE_URL));
