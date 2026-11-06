@@ -63,7 +63,7 @@ jobs:
           $setup = Get-Item "release/Muse4AI-$version-Setup-win-x64.exe"
           $log = Join-Path $env:RUNNER_TEMP 'setup.log'
           $process = Start-Process $setup.FullName -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG=`"$log`"" -PassThru -Wait
-          if ($process.ExitCode -ne 0) { Get-Content $log -Tail 20; & powershell.exe -NoProfile -ExecutionPolicy Bypass -File release/stage/install.ps1 -NoLaunch 2>&1 | Out-Host; throw "EXE installer failed: $($process.ExitCode)" }
+          if ($process.ExitCode -ne 0) { Get-Content $log -Tail 20; $t = Join-Path $env:TEMP ("diag-" + [guid]::NewGuid().ToString("N").Substring(0,6)); Copy-Item release/stage $t -Recurse; $rf = Join-Path $t "result.txt"; Push-Location $t; & powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File (Join-Path $t "install.ps1") -NoLaunch -CloseRunning -ResultFile $rf -Lang en 2>&1 | Out-Host; "install.ps1 exit: $LASTEXITCODE"; Pop-Location; if (Test-Path $rf) { "result: " + (Get-Content $rf -Raw) }; throw "EXE installer failed: $($process.ExitCode)" }
           $root = Join-Path $env:LOCALAPPDATA 'Programs/Muse4AI'
           if (-not (Test-Path "$root/app-$version/Muse4AI.exe")) { throw 'Installed app missing' }
           if ((Get-Content "$root/current.txt").Trim() -ne $version) { throw 'Wrong installed version' }
