@@ -728,8 +728,8 @@ export default {
   "Tạo ảnh và video qua Muse trên Windows: nhiều tài khoản, mỗi tài khoản đi qua proxy của nó, hàng chờ bền vững và thư viện trên máy.": "Generate images and videos through Muse on Windows: multiple accounts, each through its own proxy, a persistent queue and a local library.",
   "Cài bản mới": "Install a new version",
   "Chưa có tự cập nhật. Dữ liệu, tài khoản và thư viện được giữ nguyên khi cài đè.": "Automatic updates are not available yet. Installing over the current version preserves your data, accounts and library.",
-  "Cách dễ nhất: thoát Muse4AI rồi chạy tệp Muse4AI-…-Setup-win-x64.exe mới và chọn English hoặc Tiếng Việt. Bộ cài EXE dùng chung trình cài với gói ZIP nên cũng giữ dữ liệu và tự quay lại bản cũ nếu lỗi.":
-    "Easiest: exit Muse4AI, then run the new Muse4AI-…-Setup-win-x64.exe and choose English or Vietnamese. The EXE uses the same installer as the ZIP package, so it also keeps your data and rolls back to the old version if anything fails.",
+  "Cách dễ nhất: chạy tệp Muse4AI-…-Setup-win-x64.exe mới và chọn English hoặc Tiếng Việt — bộ cài tự đóng Muse4AI nếu app đang mở. Bộ cài EXE dùng chung trình cài với gói ZIP nên cũng giữ dữ liệu và tự quay lại bản cũ nếu lỗi.":
+    "Easiest: run the new Muse4AI-…-Setup-win-x64.exe and choose English or Vietnamese — setup closes Muse4AI for you if it is open. The EXE uses the same installer as the ZIP package, so it also keeps your data and rolls back to the old version if anything fails.",
   "Hoặc cài từ gói ZIP:": "Or install from the ZIP package:",
   "Tải tệp Muse4AI-…-win-x64.zip mới và giải nén.": "Download the new Muse4AI-…-win-x64.zip file and extract it.",
   "Thoát Muse4AI (chuột phải biểu tượng dưới khay → Thoát).": "Exit Muse4AI (right-click the tray icon → Exit).",

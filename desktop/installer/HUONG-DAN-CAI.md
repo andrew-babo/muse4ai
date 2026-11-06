@@ -28,7 +28,7 @@ Nếu thấy “Gói cài không khớp mã kiểm tra”: tệp ZIP bị hỏng
 1. Thoát hẳn app: chuột phải biểu tượng Muse4AI dưới khay → **Thoát** (bấm X chỉ thu xuống khay).
 2. Giải nén gói mới và chạy lại lệnh ở bước 1.3.
 
-Tài khoản đã đăng nhập, hàng chờ, cài đặt và thư viện được giữ nguyên. Bản trước vẫn nằm trong thư mục cài để quay lại khi cần. Nếu app đang mở, trình cài dừng và nhắc “Hãy thoát Muse4AI trước”.
+Tài khoản đã đăng nhập, hàng chờ, cài đặt và thư viện được giữ nguyên. Bản trước vẫn nằm trong thư mục cài để quay lại khi cần. Nếu app đang mở, lệnh trên dừng và nhắc “Hãy thoát Muse4AI trước”; còn bộ cài EXE tự đóng app giúp bạn (đóng bình thường, như chọn **Thoát**), thêm `-CloseRunning` vào lệnh cũng vậy.
 
 ## 3. Quay lại bản trước
 

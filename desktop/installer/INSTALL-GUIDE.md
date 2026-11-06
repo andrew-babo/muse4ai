@@ -30,7 +30,7 @@ Installer messages follow `-Lang en` or `-Lang vi`; without it they use the app'
 1. Quit the app completely: right-click the Muse4AI tray icon → **Quit** (the X button only minimises to the tray).
 2. Extract the new package and run the command from step 1.3 again.
 
-Signed-in accounts, the queue, settings and the library are kept. The previous version stays in the install folder so you can roll back. If the app is still open, the installer stops and asks you to quit Muse4AI first.
+Signed-in accounts, the queue, settings and the library are kept. The previous version stays in the install folder so you can roll back. If the app is still open, the command above stops and asks you to quit Muse4AI first; the EXE installer closes it for you instead (the normal way, like **Quit**), and so does adding `-CloseRunning` to the command.
 
 ## 3. Roll back to the previous version
 

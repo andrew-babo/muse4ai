@@ -109,8 +109,8 @@ export const DOCS_START: DocArticle[] = [
         vi: "Chuẩn bị bộ cài EXE hoặc gói ZIP Muse4AI từ nguồn bạn tin cậy.",
       },
       {
-        en: "If updating, right-click the app's tray icon and choose Quit first. Closing the window with X only minimizes it to the tray.",
-        vi: "Nếu cập nhật, hãy nhấp phải biểu tượng app ở khay hệ thống và chọn Thoát trước. Nút X chỉ thu nhỏ app xuống khay.",
+        en: "If updating with the EXE, you can leave the app open: setup closes it the normal way, like choosing Quit. With the ZIP, right-click the tray icon and choose Quit first; the window's X only minimizes it to the tray.",
+        vi: "Nếu cập nhật bằng EXE, bạn cứ để app mở: bộ cài tự đóng app theo cách bình thường, như khi chọn Thoát. Nếu dùng ZIP, hãy nhấp phải biểu tượng ở khay hệ thống và chọn Thoát trước; nút X chỉ thu nhỏ app xuống khay.",
       },
     ],
     steps: [
@@ -181,8 +181,8 @@ export const DOCS_START: DocArticle[] = [
           vi: "Bộ cài báo app vẫn chạy thì làm sao?",
         },
         a: {
-          en: "Quit from the tray icon, not the window's X button, then run the installer again.",
-          vi: "Thoát từ biểu tượng ở khay hệ thống, không chỉ bấm X trên cửa sổ, rồi chạy lại bộ cài.",
+          en: "The EXE asks the app to quit and waits about 45 seconds. If jobs are still running, Muse4AI first asks whether to quit. Answer it or let the jobs finish, quit from the tray icon (not the window's X button), then run the installer again.",
+          vi: "Bộ cài EXE nhờ app tự thoát và chờ khoảng 45 giây. Nếu còn việc đang chạy, Muse4AI sẽ hỏi lại trước khi thoát. Hãy trả lời câu hỏi đó hoặc chờ việc xong, thoát từ biểu tượng ở khay hệ thống (không chỉ bấm X trên cửa sổ), rồi chạy lại bộ cài.",
         },
       },
       {

@@ -246,7 +246,7 @@ function About() {
       <MakerCard />
       <Card title={t("Cài bản mới")} sub={t("Chưa có tự cập nhật. Dữ liệu, tài khoản và thư viện được giữ nguyên khi cài đè.")}>
         <p className="text-sm leading-relaxed text-ink-2">
-          {t("Cách dễ nhất: thoát Muse4AI rồi chạy tệp Muse4AI-…-Setup-win-x64.exe mới và chọn English hoặc Tiếng Việt. Bộ cài EXE dùng chung trình cài với gói ZIP nên cũng giữ dữ liệu và tự quay lại bản cũ nếu lỗi.")}
+          {t("Cách dễ nhất: chạy tệp Muse4AI-…-Setup-win-x64.exe mới và chọn English hoặc Tiếng Việt — bộ cài tự đóng Muse4AI nếu app đang mở. Bộ cài EXE dùng chung trình cài với gói ZIP nên cũng giữ dữ liệu và tự quay lại bản cũ nếu lỗi.")}
         </p>
         <p className="text-sm font-medium text-ink">{t("Hoặc cài từ gói ZIP:")}</p>
         <ol className="list-decimal space-y-1.5 pl-5 text-sm text-ink-2">

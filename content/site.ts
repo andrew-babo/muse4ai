@@ -33,11 +33,23 @@ export const AUTHOR: Author = {
 /** Newest first. `url = null` keeps the download page in "private beta" mode. */
 export const RELEASES: Release[] = [
   {
+    version: "2.0.0-beta.33",
+    date: "2026-11-06",
+    bytes: 171737324,
+    sha256: "C650505DD6BFFC6EDCE6E8ED3FB5843C62412CEDD43E3BCFFAFEF2E6E69C2C48",
+    url: "/__l5e/assets-v1/ca7c4aba-2f74-4829-88d3-5a2ea37285d3/muse4ai-setup-win-x64.exe",
+    notes: [
+      { en: "If Muse4AI is open when you install, setup now closes it for you (the normal way, like choosing Quit) and carries on — no need to quit first.", vi: "Nếu Muse4AI đang mở lúc cài, bộ cài giờ tự đóng app (đóng bình thường, như khi chọn Thoát) rồi cài tiếp — không cần thoát trước nữa." },
+      { en: "When setup cannot finish, it now tells you the real reason. It also works on computers where it is started from the newer PowerShell 7.", vi: "Khi không cài xong, bộ cài giờ nói rõ lý do. Bộ cài cũng chạy được trên máy mở nó từ PowerShell 7 đời mới." },
+      { en: "A friendlier first screen in the installer, and the app's built-in browser engine (Electron 45.2.1) and other parts are updated to their latest patch releases.", vi: "Màn hình đầu của bộ cài thân thiện hơn; lõi trình duyệt bên trong app (Electron 45.2.1) và các thành phần khác được cập nhật lên bản vá mới nhất." },
+    ],
+  },
+  {
     version: "2.0.0-beta.32",
     date: "2026-11-04",
     bytes: 171775932,
     sha256: "801F598845920E829EEA5AD4C98555F0600938D002AE132FA56AFD9661810274",
-    url: "/__l5e/assets-v1/291be40d-1c2d-40ac-9113-4e62cec07e09/muse4ai-setup-win-x64.exe",
+    url: null,
     notes: [
       { en: "When adding an account, each proxy now says which accounts already use it. Sharing a proxy is allowed — you just see it clearly.", vi: "Khi thêm tài khoản, mỗi proxy giờ ghi rõ đang dùng cho tài khoản nào. Vẫn dùng chung được — chỉ là nhìn ra rõ ràng." },
       { en: "In the Muse sign-in window, small pop-ups (like a tool's Connect or OAuth step) and links that open a new page now show up — the window itself stays as clean as before.", vi: "Trong cửa sổ đăng nhập Muse, cửa sổ nhỏ (như bước Connect hay OAuth của công cụ) và link mở trang mới giờ hiện được — cửa sổ chính vẫn gọn như cũ." },
