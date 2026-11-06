@@ -31,8 +31,8 @@ jobs:
         working-directory: desktop
         shell: pwsh
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: npm
@@ -81,7 +81,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or (Test-Path "$root/app-$version/Muse4AI.exe")) { throw 'Uninstall failed' }
           if ((Get-Content $sentinel).Trim() -ne 'preserve-ci-data') { throw 'Uninstall changed data' }
       - name: Upload downloadable installers
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Muse4AI-Windows-${{ github.run_number }}
           path: |
@@ -98,7 +98,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: Muse4AI-Windows-${{ github.run_number }}
           path: release
