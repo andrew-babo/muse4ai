@@ -51,9 +51,18 @@ Kiểm sau nâng cấp:
 ## Lùi bản
 
 Kho không đổi (v7), nên beta.33 mở được dữ liệu hiện tại: Cài đặt › Giới thiệu › “Quay lại bản này”, hoặc liên kết
-“quay lại bản 2.0.0-beta.33” trong cửa sổ gỡ cài của Windows. Hai tác vụ `Muse4AIStart/Quit` khi đó nhập lại từ
-`Muse4AI*.xml.orig` sau khi đổi `app-2.0.0-beta.34` thành `app-2.0.0-beta.33`. Bản sao dữ liệu trước nâng cấp:
+“quay lại bản 2.0.0-beta.33” trong cửa sổ gỡ cài của Windows. Riêng VPS có thêm hai tác vụ `Muse4AIStart/Quit`
+(chỉ có trên máy chủ): khi quay bản thì cho chúng trỏ lại `app-2.0.0-beta.33`. Bản sao dữ liệu trước nâng cấp:
 `C:\MuseStudioLab\rel34\prod-backup-20261107-001535` (giữ lại). Thư mục thử `b34-upd` và gói thử đã dọn.
+
+## Kho mã công khai
+
+- `andrew-babo/muse4ai` `main`: `66d5694f` (mã beta.34, Build 3.3, CHANGELOG/CONTRIBUTING/CODE_OF_CONDUCT, mẫu
+  issue/PR, README số test + liên kết mới; README tiếng Việt sửa liên kết tương đối trong `docs/`) và `ab43232e`.
+- Lần chạy đầu: Audit xanh, Windows EXE đỏ ở 3 test — máy Windows của GitHub đổi xuống dòng LF→CRLF khi lấy mã, test
+  so nguyên văn `CHANGELOG.md` và đoạn hàm PowerShell. Sửa test so theo LF (`ab43232e`) → **Audit xanh, Windows EXE
+  xanh** (gồm kiểm bộ cài trên Windows).
+- Script phòng thử/VPS (`evidence/lab/`) vẫn giữ riêng như các bản trước. Tag phát hành GitHub: anh tự tạo khi cần.
 
 ## Chưa kiểm
 
