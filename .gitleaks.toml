@@ -9,4 +9,5 @@ regexes = [
   '''OPS05-kin-dao''',
   '''^b3-[a-z0-9-]+$''',
   '''^wow4-(vi|en)-testimonial$''',
+  '''^msk_(YOUR_KEY|KHOA_CUA_BAN)$''',
 ]

@@ -22,7 +22,7 @@ describe("zip (diagnostics bundle)", () => {
       { name: "settings.json", data: Buffer.from("{}") },
     ]));
     const out = execFileSync("python3", ["-c", "import zipfile,sys;z=zipfile.ZipFile(sys.argv[1]);print(z.testzip());print(z.read('logs/app.jsonl').decode())", file]).toString();
-    expect(out.split("\n")[0]).toBe("None");
+    expect(out.split(/\r?\n/)[0]).toBe("None"); // Windows python prints CRLF
     expect(out).toContain("xin chào");
   });
 });

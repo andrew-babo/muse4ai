@@ -48,6 +48,13 @@ async function stepClock(n: number, ms = 5_000) {
 const chainJobs = (chainId: string) => h.repo.jobsForChain(chainId);
 const allText = () => JSON.stringify(h.events) + JSON.stringify(h.notices) + h.logs.join("\n");
 
+async function waiter(key: string): Promise<(v: unknown) => void> {
+  for (let i = 0; i < 200 && !h.loginWaiters.has(key); i++) await new Promise((r) => setTimeout(r, 10));
+  const w = h.loginWaiters.get(key);
+  if (!w) throw new Error(`login window ${key} never opened`);
+  return w as (v: unknown) => void;
+}
+
 describe("AC-VIB-01 store v2 → v3", () => {
   it("backs up first, keeps every Muse row, and adds Vibes logged_out for each account", () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "muse-v2-"));
@@ -131,7 +138,7 @@ describe("AC-VIB-02 .. AC-VIB-04 two-step login under one lease", () => {
   });
 
   it("AC-VIB-04 (a)(b)(c): closing, skipping or timing out at Vibes keeps Muse ready, Vibes unchanged, no notice", async () => {
-    const [A] = await setup(["A"], { autoLogin: false, loginStepTimeoutMs: 60 });
+    const [A] = await setup(["A"], { autoLogin: false, loginStepTimeoutMs: 500 });
     h.repo.updateAccount(A, { state: "needs_login" });
     h.repo.updateVibes(A, { status: "needs_login" });
     const notices = () => h.notices.length;
@@ -140,14 +147,15 @@ describe("AC-VIB-02 .. AC-VIB-04 two-step login under one lease", () => {
       h.fakeCfg(A).script = [{ phase: "probe", error: "SESSION_EXPIRED" }];
       h.vibesCfg(A).me = [{ status: 401, body: { error: "SessionExpired" } }];
       const before = notices();
+      h.loginWaiters.clear(); // drop the already-answered windows of the previous round
       h.coord.openLogin(A);
-      await flush();
-      h.loginWaiters.get(`${A}:muse`)!(true);
-      await flush();
+      // Poll for the login window instead of one fixed tick: slower Windows runners need more than one flush.
+      (await waiter(`${A}:muse`))(true);
+      for (let i = 0; i < 200 && h.coord.loginState(A)?.active !== "vibes"; i++) await new Promise((r) => setTimeout(r, 10));
       expect(h.coord.loginState(A)?.active).toBe("vibes");
       if (how === "close") h.loginWaiters.get(`${A}:vibes`)!(false);
       else if (how === "skip") h.coord.skipLoginStep(A);
-      else await new Promise((r) => setTimeout(r, 120));
+      else await new Promise((r) => setTimeout(r, 1_000));
       await flush();
       expect(h.coord.loginState(A)).toBeNull();
       const a = h.repo.getAccount(A)!;
