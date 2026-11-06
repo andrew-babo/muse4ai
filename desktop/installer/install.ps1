@@ -45,6 +45,9 @@ function Fail([string]$msg) {
   exit 1
 }
 
+# Any error not handled below still reaches the EXE's dialog with its real reason (never a silent exit).
+trap { Fail ((T 'Setup stopped: {0}' 'Cài đặt dừng lại: {0}') -f $_.Exception.Message) }
+
 function Test-AppRunning {
   # Win32_Process sees the app in every Windows session (an RDP desktop while this runs over SSH or as another
   # logon); Get-Process returns no Path for those, which once let an install proceed over a running app.
