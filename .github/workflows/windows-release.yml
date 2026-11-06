@@ -63,7 +63,7 @@ jobs:
           $setup = Get-Item "release/Muse4AI-$version-Setup-win-x64.exe"
           $log = Join-Path $env:RUNNER_TEMP 'setup.log'
           $process = Start-Process $setup.FullName -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG=`"$log`"" -PassThru -Wait
-          if ($process.ExitCode -ne 0) { Get-Content $log -Tail 40; throw "EXE installer failed: $($process.ExitCode)" }
+          if ($process.ExitCode -ne 0) { Get-Content $log -Tail 20; & powershell.exe -NoProfile -ExecutionPolicy Bypass -File release/stage/install.ps1 -NoLaunch 2>&1 | Out-Host; throw "EXE installer failed: $($process.ExitCode)" }
           $root = Join-Path $env:LOCALAPPDATA 'Programs/Muse4AI'
           if (-not (Test-Path "$root/app-$version/Muse4AI.exe")) { throw 'Installed app missing' }
           if ((Get-Content "$root/current.txt").Trim() -ne $version) { throw 'Wrong installed version' }
