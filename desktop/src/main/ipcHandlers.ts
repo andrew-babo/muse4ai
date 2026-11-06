@@ -14,6 +14,7 @@ import { canWriteDir } from "./paths";
 import { seedDataset } from "./testSeed";
 import { SKILL_SOURCES, SKILL_ZIP_NAME, skillZip } from "@content/skill";
 import { installSkill, SkillInstallError, skillTargetInfo } from "./skillInstall";
+import { UpdateError, type Updater } from "./updater";
 
 // Command dispatcher: schema-validated input → coordinator/services (AC-SEC-02). Unknown commands are rejected.
 
@@ -70,11 +71,18 @@ export class IpcDispatcher {
       startupPhases?: () => Record<string, number>;
       /** Called once when the renderer reports its first frame. */
       onFirstFrame?: () => void;
+      /** Build 3.3 — update check/download/install and rollback. */
+      updater?: Updater;
     },
   ) {}
 
   private home(): string {
     return this.sh.homeDir?.() ?? os.homedir();
+  }
+
+  private mustUpdater(): Updater {
+    if (!this.opts.updater) throw new CommandError("Kiểm tra bản mới chưa sẵn sàng", "unavailable");
+    return this.opts.updater;
   }
 
   private mustApi(): ApiController {
@@ -105,13 +113,23 @@ export class IpcDispatcher {
     }
   }
 
+  /** Updater refusals carry a Vietnamese message the UI translates, like CommandError. */
+  private async updateCall<T>(fn: () => T | Promise<T>): Promise<T> {
+    try {
+      return await fn();
+    } catch (e) {
+      if (e instanceof UpdateError) throw new CommandError(e.message, e.code);
+      throw e;
+    }
+  }
+
   private async run(name: CommandName, i: Record<string, never>): Promise<unknown> {
     const c = this.coord;
     const s = this.svc;
     const a = i as unknown as Record<string, unknown> & { id: string; jobId: string; assetId: string };
     switch (name) {
       case "app.snapshot":
-        return this.opts.api ? { ...c.snapshot(), api: this.opts.api.status() } : c.snapshot();
+        return { ...c.snapshot(), ...(this.opts.api ? { api: this.opts.api.status() } : {}), ...(this.opts.updater ? { update: this.opts.updater.status() } : {}) };
       case "app.ping":
         return { t: Date.now() };
       case "app.markReady": {
@@ -463,6 +481,28 @@ export class IpcDispatcher {
         return this.mustApi().dismissConsent(String(a.id));
       case "api.requestLog":
         return this.mustApi().requestLog(a.limit === undefined ? 50 : Number(a.limit));
+      // ---------- Build 3.3 updates (AC-UPD, AC-RBK)
+      case "update.status":
+        return this.mustUpdater().status();
+      case "update.check":
+        return this.mustUpdater().check();
+      case "update.download":
+        return this.updateCall(() => this.mustUpdater().download());
+      case "update.cancel":
+        return this.mustUpdater().cancelDownload();
+      case "update.install":
+        return this.updateCall(() => this.mustUpdater().install(!!a.force));
+      case "update.rollback":
+        return this.updateCall(() => this.mustUpdater().rollback(!!a.force));
+      case "update.dismissJustUpdated":
+        return this.mustUpdater().dismissJustUpdated();
+      case "update.openPage": {
+        const page = this.mustUpdater().status().latest?.page;
+        if (!page || !safeHttpUrl(page)) throw new CommandError("Chưa có trang tải về — hãy kiểm tra bản mới trước", "no_page");
+        await this.sh.openUrl?.(page);
+        return null;
+      }
+
       case "api.openDocs": {
         const st = this.mustApi().status();
         if (!st.localUrl) throw new CommandError("API đang tắt");

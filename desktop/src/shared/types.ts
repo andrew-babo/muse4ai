@@ -1,3 +1,4 @@
+import type { UpdateStatus } from "./updates";
 import type { Locale } from "./i18n";
 // Domain types shared by main, renderer and tests. Source of rules: docs/build-1.0/spec.md (rev 3), docs/build-2.0/spec.md (rev 1).
 import type { AccountExecution, BridgeStatus, ExecMode, ExecPath } from "./execution";
@@ -423,6 +424,8 @@ export interface Settings {
   concurrencyUiPages: number;
   /** Build 2.0 R120 — UI language; Vietnamese by default. */
   language: Locale;
+  /** Build 3.3 AC-UPD-02 — check the website for a newer version at start and every 12 hours (on by default). */
+  updateCheck: boolean;
 }
 
 export interface EngineStatus {
@@ -578,6 +581,8 @@ export interface Snapshot {
   chains: ExtendChain[];
   recovered: { recovered: number; review: number } | null;
   api?: ApiStatus;
+  /** Build 3.3 — update check, download and rollback state (live updates arrive as `update` events). */
+  update?: UpdateStatus;
   /** R85 — app conversation handle → the job holding its one unfinished turn (kept current from `job` events). */
   busyConversations?: Record<string, string>;
   rev: number;

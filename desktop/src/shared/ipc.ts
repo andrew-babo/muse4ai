@@ -166,13 +166,23 @@ export const COMMANDS = {
   "library.get": z.object({ assetId: id }),
 
   "settings.set": z.object({
-    key: z.enum(["perAccountConcurrency", "globalConcurrency", "preSubmitRetries", "notifications", "launchAtLogin", "displayMode", "onboardingStep", "riskAccepted", "lastRoute", "closeToTrayExplained", "extendMaxSteps", "bridgeHttpEnabled", "concurrencyUiPages", "language"]),
+    key: z.enum(["perAccountConcurrency", "globalConcurrency", "preSubmitRetries", "notifications", "launchAtLogin", "displayMode", "onboardingStep", "riskAccepted", "lastRoute", "closeToTrayExplained", "extendMaxSteps", "bridgeHttpEnabled", "concurrencyUiPages", "language", "updateCheck"]),
     value: z.union([z.number(), z.boolean(), z.string().max(300)]),
   }),
   "settings.pickLibraryDir": z.object({}),
   "settings.openDataDir": z.object({}),
   "diagnostics.export": z.object({}),
   "engine.clearUiChanged": z.object({ site: z.enum(["muse", "vibes"]).optional() }),
+
+  // Build 3.3 — update check / download / install and rollback (AC-UPD, AC-RBK). Main re-checks everything.
+  "update.status": z.object({}),
+  "update.check": z.object({}),
+  "update.download": z.object({}),
+  "update.cancel": z.object({}),
+  "update.install": z.object({ force: z.boolean().optional() }),
+  "update.rollback": z.object({ force: z.boolean().optional() }),
+  "update.dismissJustUpdated": z.object({}),
+  "update.openPage": z.object({}),
 
   // Agent API (spec §4.8, F12). Keys are shown once in the api.createKey result and never again.
   "api.status": z.object({}),
@@ -245,6 +255,7 @@ export const SETTINGS_VALIDATORS: Record<string, z.ZodTypeAny> = {
   closeToTrayExplained: z.boolean(),
   extendMaxSteps: z.number().int().min(1).max(60),
   language: z.enum(["vi", "en"]),
+  updateCheck: z.boolean(),
 };
 
 export type CommandResult = { ok: true; data: unknown } | { ok: false; error: string; code?: string };

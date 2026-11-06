@@ -1,18 +1,24 @@
-﻿<#
+<#
   Muse4AI — per-user installer (R22) / trình cài theo người dùng. No admin rights, ExecutionPolicy untouched.
   Installs into %LOCALAPPDATA%\Programs\Muse4AI\app-<version> and keeps one previous version for rollback.
   NEVER touches data (%APPDATA%\MuseStudio, %LOCALAPPDATA%\MuseStudio) or the library folder.
 
   Run (inside the extracted folder):
     powershell -ExecutionPolicy Bypass -File .\install.ps1
-  Roll back to the previous version:
+  Roll back to the previous version (also works from <install folder>\tools, without the ZIP):
     powershell -ExecutionPolicy Bypass -File .\install.ps1 -Rollback
   Messages follow -Lang en|vi; without it, the app's saved language (ui-locale), else English.
+  Build 3.3: every install keeps a verified copy of install.ps1 + uninstall.ps1 in <install folder>\tools and lists
+  Muse4AI in Windows Settings › Apps (per user, HKCU) so EXE users can uninstall or roll back without the ZIP.
+  -Gui shows failures in a message box (hidden runs started by the app or the uninstall window).
+  Isolated lab only: MUSE4AI_TEST=1 + MUSE4AI_DATA redirect data, shortcuts and the Apps entry's data paths to that folder.
 #>
 [CmdletBinding()]
 param(
   [switch]$Rollback,
+  [string]$Target = '',
   [switch]$NoLaunch,
+  [switch]$Gui,
   [switch]$CloseRunning,
   [string]$ResultFile = '',
   [ValidateSet('', 'en', 'vi')]
@@ -29,10 +35,16 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 Set-StrictMode -Version 2.0
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$InstallRoot = $InstallRoot.TrimEnd('\')
+$defaultRoot = Join-Path $env:LOCALAPPDATA 'Programs\Muse4AI'
+
+# Isolated lab (never set on a user's machine): data, shortcuts and the Apps entry point into MUSE4AI_DATA.
+$labData = if ($env:MUSE4AI_TEST -eq '1' -and $env:MUSE4AI_DATA) { $env:MUSE4AI_DATA.TrimEnd('\') } else { '' }
+$roamingDir = if ($labData) { Join-Path $labData 'roaming' } else { Join-Path $env:APPDATA 'MuseStudio' }
 
 # R120/R124: the same language as the app. An explicit -Lang (the EXE's language page) also becomes the app's first
 # language when the app has none saved yet; without -Lang, use the app's saved language, else English (the default).
-$localeFile = Join-Path $env:APPDATA 'MuseStudio\ui-locale'
+$localeFile = Join-Path $roamingDir 'ui-locale'
 $savedLang = ''
 if (Test-Path $localeFile) {
   try { $savedLang = (Get-Content $localeFile -Raw -ErrorAction Stop).Trim() } catch { $savedLang = '' }
@@ -47,6 +59,13 @@ function Fail([string]$msg) {
   Write-Host ''; Write-Host $msg -ForegroundColor Red
   # The EXE runs this script hidden; it reads this file to show the real reason instead of a generic error.
   if ($ResultFile) { try { [IO.File]::WriteAllText($ResultFile, $msg, (New-Object Text.UTF8Encoding($true))) } catch {} }
+  # Hidden runs started by the app (rollback) or the uninstall window have no console: show the reason.
+  if ($Gui) {
+    try {
+      Add-Type -AssemblyName System.Windows.Forms
+      [void][System.Windows.Forms.MessageBox]::Show($msg, 'Muse4AI', 'OK', 'Warning')
+    } catch {}
+  }
   exit 1
 }
 
@@ -73,15 +92,22 @@ function Get-InstalledVersions {
     Sort-Object LastWriteTime -Descending)
 }
 
+function Get-ShortcutPaths {
+  if ($labData) { return @((Join-Path $labData 'shortcuts\Start Menu\Muse4AI.lnk'), (Join-Path $labData 'shortcuts\Desktop\Muse4AI.lnk')) }
+  return @((Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Muse4AI.lnk'), (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Muse4AI.lnk'))
+}
+
 function Register-Shortcuts([string]$exe) {
-  $result = Join-Path $env:TEMP 'muse4ai-shortcuts.json'
-  Remove-Item $result -ErrorAction SilentlyContinue
-  $proc = Start-Process -FilePath $exe -ArgumentList '--register-shortcuts' -PassThru -WindowStyle Hidden
-  if (-not $proc.WaitForExit(30000)) { try { $proc.Kill() } catch {} }
+  # The app's own writer sets the AppUserModelID + toast activator CLSID that Windows notifications need. A lab run
+  # skips it: that writer always targets the real Start Menu and Desktop.
+  if (-not $labData) {
+    $result = Join-Path $env:TEMP 'muse4ai-shortcuts.json'
+    Remove-Item $result -ErrorAction SilentlyContinue
+    $proc = Start-Process -FilePath $exe -ArgumentList '--register-shortcuts' -PassThru -WindowStyle Hidden
+    if (-not $proc.WaitForExit(30000)) { try { $proc.Kill() } catch {} }
+  }
   # Safety net: if the app's writer did not produce a link pointing at this version, write a plain one here.
-  # The app's own writer also sets the AppUserModelID + toast activator CLSID that Windows notifications need.
-  $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Muse4AI.lnk'
-  $desktop = Join-Path ([Environment]::GetFolderPath('Desktop')) 'Muse4AI.lnk'
+  $startMenu, $desktop = Get-ShortcutPaths
   $icon = Join-Path (Split-Path -Parent $exe) 'resources\icon.ico'
   $wsh = New-Object -ComObject WScript.Shell
   foreach ($lnk in @($startMenu, $desktop)) {
@@ -99,6 +125,58 @@ function Register-Shortcuts([string]$exe) {
 
 function Write-Current([string]$version) {
   Set-Content -Path (Join-Path $InstallRoot 'current.txt') -Value $version -Encoding ASCII
+}
+
+# Same function, same text in uninstall.ps1 (checked by desktop/test/installer-scripts.test.ts).
+function Get-UninstallKeyName {
+  if ($InstallRoot.TrimEnd('\') -ieq $defaultRoot.TrimEnd('\')) { return 'Muse4AI' }
+  $sha = [Security.Cryptography.SHA256]::Create()
+  $hex = -join ($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($InstallRoot.TrimEnd('\').ToLowerInvariant())) | Select-Object -First 4 | ForEach-Object { $_.ToString('x2') })
+  return "Muse4AI-$hex"
+}
+
+function Save-Tools {
+  # AC-UNI-02: keep the verified scripts so uninstall and rollback work without the ZIP (EXE users never see it).
+  $tools = Join-Path $InstallRoot 'tools'
+  if ($here.TrimEnd('\') -ieq $tools) { return }
+  New-Item -ItemType Directory -Force -Path $tools | Out-Null
+  foreach ($name in @('install.ps1', 'uninstall.ps1')) {
+    $tmp = Join-Path $tools ".$name.new"
+    Copy-Item -Path (Join-Path $here $name) -Destination $tmp -Force
+    Move-Item -Path $tmp -Destination (Join-Path $tools $name) -Force
+  }
+}
+
+function Register-Uninstall([string]$version) {
+  # AC-UNI-01: Windows Settings › Apps entry for this user (no admin rights). Only an Uninstall button (no Modify/Repair).
+  $uninstaller = Join-Path $InstallRoot 'tools\uninstall.ps1'
+  if (-not (Test-Path $uninstaller)) { return }
+  $appDir = Join-Path $InstallRoot "app-$version"
+  $ps = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+  $extra = ''
+  if ($InstallRoot -ine $defaultRoot) { $extra += " -InstallRoot `"$InstallRoot`"" }
+  if ($labData) { $extra += " -LabData `"$labData`"" }
+  $key = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$(Get-UninstallKeyName)"
+  $kb = 0
+  try { $kb = [int][Math]::Ceiling(((Get-ChildItem -Path $appDir -Recurse -File -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum) / 1KB) } catch {}
+  New-Item -Path $key -Force | Out-Null
+  $name = if ($InstallRoot -ieq $defaultRoot) { 'Muse4AI' } else { "Muse4AI ($InstallRoot)" }
+  $values = [ordered]@{
+    DisplayName          = $name
+    DisplayVersion       = $version
+    Publisher            = 'Andrew Babo'
+    DisplayIcon          = "$(Join-Path $appDir 'Muse4AI.exe'),0"
+    InstallLocation      = $InstallRoot
+    InstallDate          = (Get-Date).ToString('yyyyMMdd')
+    UninstallString      = "`"$ps`" -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$uninstaller`" -Gui$extra"
+    QuietUninstallString = "`"$ps`" -NoProfile -ExecutionPolicy Bypass -File `"$uninstaller`"$extra"
+    URLInfoAbout         = 'https://muse4ai.andrewbabo.com'
+    URLUpdateInfo        = 'https://muse4ai.andrewbabo.com/download'
+    HelpLink             = 'https://github.com/andrew-babo/muse4ai/issues'
+  }
+  foreach ($k in $values.Keys) { New-ItemProperty -Path $key -Name $k -Value $values[$k] -PropertyType String -Force | Out-Null }
+  foreach ($k in @('NoModify', 'NoRepair')) { New-ItemProperty -Path $key -Name $k -Value 1 -PropertyType DWord -Force | Out-Null }
+  New-ItemProperty -Path $key -Name 'EstimatedSize' -Value $kb -PropertyType DWord -Force | Out-Null
 }
 
 function Write-FirstLanguage {
@@ -139,13 +217,17 @@ if (Test-Path $InstallRoot) {
 if ($Rollback) {
   $versions = Get-InstalledVersions
   $current = if (Test-Path (Join-Path $InstallRoot 'current.txt')) { (Get-Content (Join-Path $InstallRoot 'current.txt') -Raw).Trim() } else { '' }
-  $prev = $versions | Where-Object { $_.Name -ne "app-$current" } | Select-Object -First 1
+  $prev = if ($Target) { $versions | Where-Object { $_.Name -eq "app-$Target" } | Select-Object -First 1 } else { $versions | Where-Object { $_.Name -ne "app-$current" } | Select-Object -First 1 }
   if (-not $prev) { Fail (T 'There is no previous version to roll back to.' 'Không có bản trước để quay lại.') }
   Say (T 'Note: data written after the upgrade may be missing in the older version. Data backups are in %APPDATA%\MuseStudio\backups.' 'Lưu ý: dữ liệu ghi sau lần nâng cấp có thể không có trong bản cũ. Bản sao lưu dữ liệu nằm trong %APPDATA%\MuseStudio\backups.') 'Yellow'
   $ver = $prev.Name.Substring(4)
   Register-Shortcuts (Join-Path $prev.FullName 'Muse4AI.exe')
   Write-Current $ver
-  Say ((T 'Rolled back to version {0}.' 'Đã quay lại bản {0}.') -f $ver) 'Green'
+  try { Register-Uninstall $ver } catch { Say ((T 'Windows Apps entry not updated: {0}' 'Chưa cập nhật được mục trong Ứng dụng của Windows: {0}') -f $_.Exception.Message) 'Yellow' }
+  # The rolled-back version keeps its folder date fresh, so the next -Rollback finds the newer one as "previous".
+  try { (Get-Item $prev.FullName).LastWriteTime = Get-Date } catch {}
+  Say ((T 'Now using version {0}.' 'Đã chuyển sang bản {0}.') -f $ver) 'Green'
+  if (-not $NoLaunch) { Start-Process -FilePath (Join-Path $prev.FullName 'Muse4AI.exe') }
   exit 0
 }
 
@@ -210,6 +292,8 @@ foreach ($d in (Get-InstalledVersions | Where-Object { $_.Name -ne "app-$version
 }
 Get-ChildItem -Path $InstallRoot -Directory -Filter '.staging-*' -ErrorAction SilentlyContinue | ForEach-Object { Remove-Item -Recurse -Force $_.FullName -ErrorAction SilentlyContinue }
 Write-FirstLanguage
+# The app is installed at this point; a failure below only costs the Apps entry, never the install.
+try { Save-Tools; Register-Uninstall $version } catch { Say ((T 'Windows Apps entry not added: {0}' 'Chưa thêm được mục trong Ứng dụng của Windows: {0}') -f $_.Exception.Message) 'Yellow' }
 
 Say ''
 Say ((T 'Installed Muse4AI {0} in {1}' 'Đã cài Muse4AI {0} vào {1}') -f $version, $target) 'Green'

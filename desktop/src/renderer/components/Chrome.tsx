@@ -11,6 +11,7 @@ import { LanguageSwitch, LanguageToggle } from "./LanguageSwitch";
 import { SidebarCredit } from "./MakerCredit";
 import { useOverlays } from "./Overlay";
 import { Button, IconButton } from "./ui";
+import { useUpdateDot } from "../screens/SettingsUpdate";
 import { t, tc } from "@shared/i18n";
 
 const NAV_ICONS = [Home, Clock3, Layers, Images, Users, SettingsIcon, BookOpen];
@@ -26,6 +27,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const engine = useUi((s) => s.snap?.engine);
   const connected = useUi((s) => s.connected);
   const [hover, setHover] = useState<string | null>(null);
+  const updateDot = useUpdateDot();
   const shown = accounts.slice(0, 6);
   const more = accounts.length - shown.length;
   const active = (route: string) => r.path === route || r.path.startsWith(route.replace("/general", "") + "/") || (route === "/settings/general" && r.path.startsWith("/settings"));
@@ -64,6 +66,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
                   </span>
                 )}
                 {dot && <span className={cx("rounded-full bg-attention", collapsed ? "absolute right-1.5 top-1.5 size-2" : "size-2")} aria-label={t("Có lượt cần anh xem")} />}
+                {n.route.startsWith("/settings") && updateDot && <span className={cx("rounded-full bg-accent", collapsed ? "absolute right-1.5 top-1.5 size-2" : "size-2")} aria-label={t("Có bản mới")} />}
               </button>
             </li>
           );

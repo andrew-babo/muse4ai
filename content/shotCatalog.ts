@@ -44,7 +44,7 @@ export const SHOT_CATALOG: ShotSpec[] = [
   { id: "settings-remote", route: "/settings/api", state: { en: "Remote access with Quick tunnel and own domain options.", vi: "Truy cập từ xa có Quick tunnel và tên miền riêng." } },
   { id: "settings-security", route: "/settings/security", state: { en: "Settings › Security.", vi: "Cài đặt › Bảo mật." } },
   { id: "settings-diagnostics", route: "/settings/diagnostics", state: { en: "Settings › Diagnostics.", vi: "Cài đặt › Chẩn đoán." } },
-  { id: "settings-about", route: "/settings/about", state: { en: "Settings › About with version and credits.", vi: "Cài đặt › Giới thiệu có phiên bản và ghi nguồn." } },
+  { id: "settings-about", route: "/settings/about", state: { en: "Settings › About: version, the Updates card and who made the app.", vi: "Cài đặt › Giới thiệu: phiên bản, thẻ Cập nhật và người làm app." } },
   { id: "guide-home", route: "/guide", state: { en: "Guide page with chapters and search.", vi: "Trang Hướng dẫn có các chương và ô tìm." } },
   { id: "guide-agent", route: "/guide", state: { en: "Guide article with the For your AI agent panel.", vi: "Bài hướng dẫn có thẻ Cho AI agent." } },
 ];

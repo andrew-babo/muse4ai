@@ -13,6 +13,7 @@ import { navigate, useRoute } from "../lib/router";
 import { pushToast, useUi } from "../lib/store";
 import { cx } from "../lib/ui";
 import { ApiSettings } from "./SettingsApi";
+import { UpdateCard, useUpdateDot } from "./SettingsUpdate";
 import { RunSettings } from "./Execution";
 import { LanguageSwitch } from "../components/LanguageSwitch";
 import { MakerCard } from "../components/MakerCredit";
@@ -40,6 +41,7 @@ async function setSetting<K extends keyof SettingsT>(key: K, value: SettingsT[K]
 export function Settings() {
   const r = useRoute();
   const tab = r.name === "settings" ? r.tab : "general";
+  const updateDot = useUpdateDot();
   return (
     <div className="flex h-full flex-col px-8 pt-6">
       <SectionTitle>{t("Cài đặt")}</SectionTitle>
@@ -50,7 +52,8 @@ export function Settings() {
               <li key={item.key}>
                 <button type="button" aria-current={tab === item.key ? "page" : undefined} onClick={() => navigate(`/settings/${item.key}`)} className={cx("flex h-10 w-full items-center gap-2.5 rounded-[12px] px-3 text-base", tab === item.key ? "bg-surface font-semibold text-ink shadow-sm" : "text-ink-2 hover:bg-surface/60 hover:text-ink")}>
                   <item.icon className="size-4" aria-hidden />
-                  {t(item.label)}
+                  <span className="flex-1 text-left">{t(item.label)}</span>
+                  {item.key === "about" && updateDot && <span className="size-2 rounded-full bg-accent" aria-label={t("Có bản mới")} />}
                 </button>
               </li>
             ))}
@@ -243,8 +246,11 @@ function About() {
         <p className="text-sm font-medium text-ink-2">{t("Cầu nối AI agent — dùng được với Muse")}</p>
         <p className="text-sm leading-relaxed text-ink-2">{t("Tạo ảnh và video qua Muse trên Windows: nhiều tài khoản, mỗi tài khoản đi qua proxy của nó, hàng chờ bền vững và thư viện trên máy.")}</p>
       </Card>
-      <MakerCard />
-      <Card title={t("Cài bản mới")} sub={t("Chưa có tự cập nhật. Dữ liệu, tài khoản và thư viện được giữ nguyên khi cài đè.")}>
+      {/* Updates sit right under the version so a waiting update is seen without scrolling. */}
+      <UpdateCard>
+        <details className="group border-t border-line pt-4">
+          <summary className="cursor-pointer select-none text-base text-ink marker:text-ink-3">{t("Cài thủ công (EXE hoặc ZIP)")}</summary>
+          <div className="mt-3 flex flex-col gap-3">
         <p className="text-sm leading-relaxed text-ink-2">
           {t("Cách dễ nhất: chạy tệp Muse4AI-…-Setup-win-x64.exe mới và chọn English hoặc Tiếng Việt — bộ cài tự đóng Muse4AI nếu app đang mở. Bộ cài EXE dùng chung trình cài với gói ZIP nên cũng giữ dữ liệu và tự quay lại bản cũ nếu lỗi.")}
         </p>
@@ -269,7 +275,10 @@ function About() {
             <Copy className="size-4" />
           </IconButton>
         </div>
-      </Card>
+          </div>
+        </details>
+      </UpdateCard>
+      <MakerCard />
       <Card title={t("Mã nguồn mở và ghi công")} sub={t("Danh sách đọc từ cùng nguồn với trang Mã mở trên website.")}>
         {/* Build 3.0 AC-APP-OSS-01: every credit used in the app, from the shared registry (no second hand-written list). */}
         <ul className="space-y-1.5 text-sm text-ink-2">

@@ -1,0 +1,68 @@
+name: Bug report / Báo lỗi
+description: Something in Muse4AI does not work as the guide says. / Có chỗ không chạy như hướng dẫn.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste API keys (`m4a_…`), tokens, cookies, proxy passwords, e-mails or phone numbers.**
+        Security problems go to a [private report](https://github.com/andrew-babo/muse4ai/security/advisories/new), not here.
+        Không dán khoá API, token, cookie, mật khẩu proxy, email hay số điện thoại. Lỗi bảo mật hãy báo riêng theo link trên.
+  - type: input
+    id: version
+    attributes:
+      label: Muse4AI version / Phiên bản
+      description: Settings › About (e.g. 2.0.0-beta.34)
+      placeholder: 2.0.0-beta.34
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version / Phiên bản Windows
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / Khu vực
+      options:
+        - Install, update or uninstall / Cài, cập nhật, gỡ
+        - Accounts, sign-in or proxies / Tài khoản, đăng nhập, proxy
+        - Queue or jobs / Hàng chờ, công việc
+        - Library / Thư viện
+        - API, MCP or OAuth for agents / API, MCP, OAuth cho agent
+        - Guide or website / Hướng dẫn, website
+        - Other / Khác
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / Chuyện gì xảy ra
+      description: Include the exact message the app showed. / Kèm nguyên văn thông báo app hiện.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Các bước làm lại
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected / Bạn mong đợi gì
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks / Kiểm tra
+      options:
+        - label: I removed keys, tokens, cookies and personal data from this report and its attachments. / Tôi đã xoá khoá, token, cookie và dữ liệu cá nhân.
+          required: true
+        - label: If I attach the diagnostics ZIP (Settings › Diagnostics), I read it first. / Nếu đính kèm ZIP chẩn đoán, tôi đã đọc lại.

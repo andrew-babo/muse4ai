@@ -66,6 +66,10 @@
 
 ## Packaging
 - Packaging always rebuilds before packing (`npm run package:win`), so a release ZIP never contains stale `dist` output.
+- Updates are checked, downloaded and SHA-256/size-verified only in main (`main/updater.ts`, rules in `shared/updates.ts`) from an HTTPS manifest on `SITE_URL`, then installed by running the same Inno setup silently with `/INSTALLROOT` + `/RELAUNCH`; never a second installer path or an auto-install without the user's click, because ZIP, EXE and in-app updates must share one data-preserving install.
+- Rollback is offered only when `versions.json` (roaming dir, written after the store opens) records that the kept previous version reads the current store schema; unknown means no offer, because an older build refuses a newer store.
+- The app starts PowerShell only through cmd's `start` (`consoleLaunchArgs`, verbatim), never as a detached child, because a detached powershell.exe has no console and exits before its first line, and a non-detached child dies with the app.
+- Every install copies its verified `install.ps1`/`uninstall.ps1` to `<install root>\tools` and registers a per-user (HKCU) Apps entry keyed by the install root; uninstall removes only shortcuts, Run values, activator keys and helpers that point into that root, and data only for the standard root, because several copies (and lab installs) can live on one machine.
 
 ## Language and renderer
 - UI text is written in Vietnamese and that text is the catalog key; English lives only in `src/shared/i18n/catalog/*`, every renderer/main string goes through `t`/`tc`/`tl`, and an AST coverage test fails on unwrapped or untranslated text, because one source string per message keeps the two languages from drifting.

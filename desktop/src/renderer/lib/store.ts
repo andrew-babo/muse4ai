@@ -3,6 +3,7 @@ import { enabledCapabilities, isVibesCapability } from "@shared/capabilities";
 import { mergeResync, upsertByRev } from "@shared/resync";
 import { nextBusyConversations } from "@shared/chat";
 import type { Account, ApiStatus, Asset, Batch, CapabilityKey, EngineStatus, ExtendChain, Job, Proxy, Settings, Snapshot } from "@shared/types";
+import type { UpdateStatus } from "@shared/updates";
 import { t } from "@shared/i18n";
 
 // Renderer state: one snapshot from the main process + batched events (spec §4.6). The renderer never owns business data.
@@ -186,6 +187,9 @@ export function applyEvents(batch: { type: string; payload: unknown; rev: number
       }
       case "api":
         patchSnap((s) => ({ ...s, api: p as ApiStatus }));
+        break;
+      case "update":
+        patchSnap((s) => ({ ...s, update: p as UpdateStatus }));
         break;
       case "preview": {
         const { accountId, dataUrl } = p as { accountId: string; dataUrl: string };

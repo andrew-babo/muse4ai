@@ -498,6 +498,16 @@ exports.run = async function run(cfg) {
   };
 
   const phaseO = async (loc) => { await lang(loc); await emulate(); await sleep(800); await shoot("onboarding-welcome", loc); };
+  // Settings › About alone (Build 3.3: the Updates card). Runs on a fresh lab install whose release file names this
+  // same version, so the card reads "up to date" with a check time instead of a version that is never published.
+  const phaseU = async (loc) => {
+    await prep(loc);
+    await go("/settings/about", 1000);
+    await button(loc === "en" ? "Check now" : "Kiểm tra ngay");
+    for (let i = 0; i < 40 && (await inv("app.snapshot")).update?.checking; i++) await sleep(250);
+    await sleep(600);
+    await shoot("settings-about", loc);
+  };
 
   const phaseP = async () => {
     await inv("proxy.import", { text: "198.51.100.23:8080:labuser3:labpass3" });
@@ -513,6 +523,7 @@ exports.run = async function run(cfg) {
     log("phase", ph);
     try {
       if (name === "O") await phaseO(loc);
+      else if (name === "U") await phaseU(loc);
       else if (name === "P") await phaseP();
       else if (name === "Q") await phaseQ();
       else if (name === "G") await phaseG();

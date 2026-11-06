@@ -9,6 +9,8 @@ export const POPUP_CLAMP = { minWidth: 360, maxWidth: 1000, minHeight: 400, maxH
 export const STRIP_HEIGHT = 36;
 /** Tab strip → main messages travel as the strip page's title: `m4t:<seq>:<cmd>:<id>`. */
 export const STRIP_PREFIX = "m4t:";
+/** The tab strip loads nothing: inline style/script only, and images only as data: URLs main has checked (AC-FAV-01). */
+export const STRIP_CSP = "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:";
 
 export type OpenDisposition = "default" | "foreground-tab" | "background-tab" | "new-window" | "other";
 
@@ -185,11 +187,75 @@ export function parseStripCommand(title: string): { cmd: "select" | "close"; id:
   return m ? { cmd: m[1] as "select" | "close", id: Number(m[2]) } : null;
 }
 
-/** The letter shown instead of a favicon (a favicon would have to be fetched; the strip loads nothing — R152). */
+/** The letter shown while a tab has no usable favicon (the strip itself loads nothing — R152). */
 export function tabMonogram(host: string): string {
   const h = host.replace(/^www\./i, "");
   const ch = [...h][0];
   return ch ? ch.toUpperCase() : "•";
+}
+
+// ---------------------------------------------------------------------------------------------- favicons (AC-FAV-01)
+
+export const FAVICON_MAX_BYTES = 64 * 1024;
+
+export type FaviconSource = { kind: "fetch"; url: string } | { kind: "inline"; bytes: Uint8Array };
+
+function b64decode(s: string): Uint8Array | null {
+  try {
+    const bin = atob(s);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Which favicon a tab shows: the first http(s) URL the page lists (main fetches it through the account's own session
+ * and proxy), or an inline `data:` image. Anything else (file:, blob:, chrome:, oversized data) is ignored.
+ */
+export function pickFavicon(urls: readonly string[]): FaviconSource | null {
+  for (const u of urls.slice(0, 8)) {
+    if (typeof u !== "string" || u.length > 200_000) continue;
+    const inline = /^data:image\/[a-z0-9.+-]+;base64,([A-Za-z0-9+/=\s]+)$/i.exec(u);
+    if (inline) {
+      const bytes = b64decode(inline[1].replace(/\s+/g, ""));
+      if (bytes && bytes.length > 0 && bytes.length <= FAVICON_MAX_BYTES) return { kind: "inline", bytes };
+      continue;
+    }
+    try {
+      const url = new URL(u);
+      if ((url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password) return { kind: "fetch", url: url.href };
+    } catch {
+      /* not a URL */
+    }
+  }
+  return null;
+}
+
+/** Image type by its first bytes — servers often answer a missing icon with an HTML page labelled anything. */
+export function sniffFavicon(bytes: Uint8Array): string | null {
+  const b = bytes;
+  const at = (i: number, ...v: number[]) => v.every((x, k) => b[i + k] === x);
+  if (b.length >= 8 && at(0, 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return "image/png";
+  if (b.length >= 6 && at(0, 0x00, 0x00, 0x01, 0x00) && (b[4] | (b[5] << 8)) > 0) return "image/x-icon";
+  if (b.length >= 6 && at(0, 0x47, 0x49, 0x46, 0x38)) return "image/gif";
+  if (b.length >= 3 && at(0, 0xff, 0xd8, 0xff)) return "image/jpeg";
+  if (b.length >= 12 && at(0, 0x52, 0x49, 0x46, 0x46) && at(8, 0x57, 0x45, 0x42, 0x50)) return "image/webp";
+  const head = new TextDecoder("utf-8", { fatal: false }).decode(b.subarray(0, 1024)).replace(/^\uFEFF/, "").trimStart();
+  if (/^(<\?xml[^>]*\?>\s*)?(<!--[\s\S]*?-->\s*)*(<!doctype svg[^>]*>\s*)?<svg[\s>]/i.test(head)) return "image/svg+xml";
+  return null;
+}
+
+/** A favicon the strip may show: a real image ≤ 64 KiB, re-encoded as a `data:` URL (the strip's CSP allows only data: images). */
+export function faviconDataUrl(bytes: Uint8Array): string | null {
+  if (!bytes.length || bytes.length > FAVICON_MAX_BYTES) return null;
+  const mime = sniffFavicon(bytes);
+  if (!mime) return null;
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return `data:${mime};base64,${btoa(bin)}`;
 }
 
 export function windowTitle(pageTitle: string, alias: string, fallback: string): string {

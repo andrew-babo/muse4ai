@@ -20,8 +20,8 @@ with no cloud middleman and no per-seat fee.
 ![MIT licensed](https://img.shields.io/badge/license-MIT-2D664D?style=flat-square)
 ![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-1A50D7?style=flat-square)
 ![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-5F5A52?style=flat-square)
-![775 tests](https://img.shields.io/badge/tests-775-2D664D?style=flat-square)
-![v2.0.0-beta.33](https://img.shields.io/badge/version-2.0.0--beta.33-B4762B?style=flat-square)
+![841 tests](https://img.shields.io/badge/tests-841-2D664D?style=flat-square)
+![v2.0.0-beta.34](https://img.shields.io/badge/version-2.0.0--beta.34-B4762B?style=flat-square)
 
 </div>
 
@@ -116,7 +116,8 @@ with your session, and keeps every result, key and token in
 Grab the installer from the
 [download page](https://muse4ai.andrewbabo.com/download), run it, then add your Muse
 account in **Accounts**. Windows will warn that the file is unsigned — choose
-**More info → Run anyway**.
+**More info → Run anyway**. After that the app checks for new versions
+by itself and installs them from **Settings › About** — no need to come back here.
 
 ### 2. Run from source
 
@@ -193,7 +194,7 @@ For agents that prefer Markdown: [llms.txt](https://muse4ai.andrewbabo.com/llms.
 
 ```bash
 cd desktop
-npm test            # 775 tests
+npm test            # 841 tests
 npm run typecheck   # strict TypeScript
 npm run package:win # Windows ZIP + installer inputs
 ```
@@ -201,12 +202,15 @@ npm run package:win # Windows ZIP + installer inputs
 ## Quality checks
 
 Every push, and every Monday at 02:00 UTC, GitHub Actions re-runs the whole suite:
-**775 tests**, a type check, a dependency vulnerability scan, a secret scan across the
+**841 tests**, a type check, a dependency vulnerability scan, a secret scan across the
 full git history, and live checks against the public endpoints. If a weekly run fails,
 an issue is opened automatically.
 
 - Audit report: [docs/audit/2026-11-06.md](docs/audit/2026-11-06.md)
-- Build specs, plans and lab evidence: [docs/build-3.2/](docs/build-3.2/)
+- Build specs, plans and lab evidence: [docs/build-3.3/](docs/build-3.3/) (updates, rollback, uninstall) ·
+  [docs/build-3.2/](docs/build-3.2/)
+- What changed in each version: [CHANGELOG.md](CHANGELOG.md)
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 - Reporting a vulnerability privately: [SECURITY.md](SECURITY.md)
 
 ## Honest notes

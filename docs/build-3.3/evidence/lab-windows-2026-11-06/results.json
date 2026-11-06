@@ -1,0 +1,147 @@
+[
+ {
+  "check": "UNI-01/02 EXE installs silently into the lab folder",
+  "ok": true,
+  "note": "30s"
+ },
+ {
+  "check": "UNI-02 tools\\install.ps1 + uninstall.ps1 kept in the install folder, same bytes as the package",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "UNI-01 Apps entry (HKCU) with only an Uninstall button and site links",
+  "ok": true,
+  "note": "{\"DisplayName\": \"Muse4AI (C:\\\\MuseStudioLab\\\\b34-upd\\\\install)\", \"DisplayVersion\": \"2.0.0-beta.34\", \"Publisher\": \"Andrew Babo\", \"InstallLocation\": \"C:\\\\MuseStudioLab\\\\b34-upd\\\\install\", \"NoModify\": 1, \"NoRepair\": 1, \"EstimatedSize\": 381504, \"URLInfoAbout\": \"https://muse4ai.andrewbabo.com\", \"HelpLink\": \"https://github.com/andrew-babo/muse4ai/issues\", \"UninstallString\": \"\\\"C:\\\\windows\\\\System32\\\\Win"
+ },
+ {
+  "check": "UNI-05 lab entry is its own (named after the folder, -InstallRoot + -LabData), shortcuts stay in the lab",
+  "ok": true,
+  "note": "Muse4AI (C:\\MuseStudioLab\\b34-upd\\install)"
+ },
+ {
+  "check": "live app untouched by the lab install",
+  "ok": true,
+  "note": "live health 200\r · clsid C:\\Users\\Administrator\\AppData\\Local\\Programs\\Muse4AI\\app-2.0.0-beta.33\\Muse4AI.exe\r · live apps entry False\r · live current 2.0.0-beta.33\r · real start menu link True"
+ },
+ {
+  "check": "lab: beta.34 Windows build under test",
+  "ok": true,
+  "note": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+ },
+ {
+  "check": "setup: lab account ready (fake gateway)",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "UPD-02/03 check finds the newer version from the release file",
+  "ok": true,
+  "note": "{\"available\": true, \"installable\": true, \"error\": null}"
+ },
+ {
+  "check": "UPD-05 download completes and the SHA-256 matches",
+  "ok": true,
+  "note": "{\"state\": \"ready\", \"received\": 171758039, \"total\": 171758039, \"error\": null}"
+ },
+ {
+  "check": "setup: a turn is running on the fake gateway",
+  "ok": true,
+  "note": "{\"id\": \"9b6df594-4e86-4354-9a58-a66a4b124bca\", \"batchId\": null, \"kind\": \"chat\", \"mode\": \"text\", \"prompt\": \"L\\u01b0\\u1ee3t ch\\u1ea1y trong l\\u00fac c\\u1eadp nh\\u"
+ },
+ {
+  "check": "UPD-06 installing with a running turn asks first",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "UPD-06 the app quits, setup installs and reopens the new version by itself",
+  "ok": true,
+  "note": "44s · setup window seen: True"
+ },
+ {
+  "check": "UPD-06 install folder now on beta.35, beta.34 kept as the previous version, Apps entry updated",
+  "ok": true,
+  "note": "folders app-2.0.0-beta.34,app-2.0.0-beta.35,tools"
+ },
+ {
+  "check": "reopened copy is beta.35 (debug port carried by the environment)",
+  "ok": true,
+  "note": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+ },
+ {
+  "check": "UPD-07 'updated from beta.34' note shown once after the update",
+  "ok": true,
+  "note": "{\"from\": \"2.0.0-beta.34\", \"notes\": [{\"en\": \"Lab build: same app, newer number.\", \"vi\": \"B\\u1ea3n ph\\u00f2ng th\\u1eed: c\\u00f9ng app, s\\u1ed1 b\\u1ea3n m\\u1edbi h\\u01a1n.\"}]}"
+ },
+ {
+  "check": "UPD-07 the note is on the Updates card (Vietnamese)",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "RBK-01/02 previous version beta.34 offered (versions.json: it reads the current store)",
+  "ok": true,
+  "note": "{\"ok\": true, \"version\": \"2.0.0-beta.34\"}"
+ },
+ {
+  "check": "UPD-06 the turn sent before the update is still one job (reconciled, never resent)",
+  "ok": true,
+  "note": "[{\"state\": \"generating\", \"attempts\": null, \"error\": null}]"
+ },
+ {
+  "check": "UPD-07 the used installer is cleaned up at start",
+  "ok": true,
+  "note": "installers state.json"
+ },
+ {
+  "check": "RBK-03 rollback: app quits, beta.34 opens again with the same data, Apps entry follows",
+  "ok": true,
+  "note": "10s"
+ },
+ {
+  "check": "RBK-03 beta.34 reads the same store (account + job still there)",
+  "ok": true,
+  "note": "[{\"state\": \"generating\", \"attempts\": null}]"
+ },
+ {
+  "check": "RBK-02 after going back, the kept newer version is offered as 'Chuyển sang', never 'Quay lại'",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "UNI-03 Cancel closes the window and changes nothing",
+  "ok": true,
+  "note": "still installed True entry True"
+ },
+ {
+  "check": "setup: a turn is running before the uninstall",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "UNI-04 running job: the app asks, the uninstall stops after ~45 s with the reason and changes nothing",
+  "ok": true,
+  "note": "warning after 51s · still installed True entry True tools True"
+ },
+ {
+  "check": "UNI-04 Uninstall closes the running app the normal way, removes program, entry and lab shortcuts",
+  "ok": true,
+  "note": "3s"
+ },
+ {
+  "check": "UNI-03 data kept by default (accounts/settings for a reinstall); the final message closes",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "check": "live app untouched by the lab uninstall (health, Apps entry, current version, real shortcuts)",
+  "ok": true,
+  "note": "live health 200\r · clsid none\r · live apps entry False\r · live current 2.0.0-beta.33\r · real start menu link True"
+ },
+ {
+  "check": "UNI-05 delete-data box: program + lab data removed, library file kept",
+  "ok": true,
+  "note": "box ticked by a mouse click (screenshot n05); root/entry gone, lab roaming+local data gone, library keep.txt still there; final message: data removed, library kept"
+ }
+]

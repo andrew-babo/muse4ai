@@ -5,9 +5,13 @@ import {
   cycleTab,
   decideWindowOpen,
   EMPTY_TABS,
+  FAVICON_MAX_BYTES,
+  faviconDataUrl,
   parseStripCommand,
+  pickFavicon,
   popupPlacement,
   selectTab,
+  STRIP_CSP,
   STRIP_HEIGHT,
   STRIP_PREFIX,
   stripVisible,
@@ -27,6 +31,8 @@ import { t } from "../shared/i18n";
 // anything else becomes a tab of the account's one extra-pages window: a WebContentsView per tab under a tiny local
 // tab strip that only shows from two tabs up. Every page stays in the account's own session (cookies + proxy); the
 // strip is a data: page that loads nothing (CSP default-src 'none') and talks to main through console messages.
+// Build 3.3 AC-FAV-01: a tab shows its site's favicon — main fetches it through the account's session (same proxy),
+// checks it is a real image ≤ 64 KiB and hands the strip a data: URL (the strip's CSP allows data: images only).
 
 export interface ExtraPagesHost {
   session(accountId: string): Session;
@@ -47,6 +53,10 @@ interface Tab {
   title: string;
   host: string;
   loading: boolean;
+  /** data: URL of the favicon, null → monogram. */
+  icon: string | null;
+  /** The favicon source being shown or fetched, so a late answer for an older page is dropped. */
+  iconKey: string;
 }
 
 interface Extras {
@@ -56,17 +66,22 @@ interface Extras {
   state: TabState;
   stripReady: boolean;
   lastBounds: Rect | null;
+  /** Favicon fetch results by URL (null = not a usable image), bounded. */
+  icons: Map<string, string | null>;
 }
+
+const ICON_CACHE_MAX = 64;
+const ICON_TIMEOUT_MS = 8000;
 
 export interface ExtraPagesSnapshot {
   popups: { title: string; bounds: Rect; content: Rect; webrtc: string }[];
   window: { visible: boolean; title: string; bounds: Rect } | null;
-  tabs: { id: number; title: string; host: string; active: boolean; bounds: Rect | null; webrtc: string }[];
+  tabs: { id: number; title: string; host: string; active: boolean; bounds: Rect | null; webrtc: string; icon: boolean }[];
   stripVisible: boolean;
 }
 
 const STRIP_HTML = `<!doctype html><html><head><meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<meta http-equiv="Content-Security-Policy" content="${STRIP_CSP}">
 <title>m4t</title><style>
 :root{color-scheme:light}*{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:#F7F4EE;color:#5F5A52;user-select:none;
@@ -80,11 +95,12 @@ border-radius:9px 9px 0 0;cursor:default;outline:none;transition:background-colo
 .tab:focus-visible{box-shadow:inset 0 0 0 2px #2E63E6}
 .mono{flex:none;display:grid;place-items:center;width:16px;height:16px;border-radius:5px;background:rgba(46,99,230,.12);
 color:#1A50D7;font-size:10px;font-weight:700}
-.mono.busy{animation:pulse 1s ease-in-out infinite}@keyframes pulse{50%{opacity:.35}}
+.fav{flex:none;width:16px;height:16px;border-radius:3px;object-fit:contain}
+.busy{animation:pulse 1s ease-in-out infinite}@keyframes pulse{50%{opacity:.35}}
 .name{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .x{flex:none;display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:6px;background:transparent;
 color:inherit;opacity:.55}.x:hover{background:rgba(26,24,20,.08);opacity:1}.x svg{width:10px;height:10px}
-@media (prefers-reduced-motion:reduce){.mono.busy{animation:none}.tab{transition:none}}
+@media (prefers-reduced-motion:reduce){.busy{animation:none}.tab{transition:none}}
 </style></head><body><nav id="s" role="tablist"></nav><script>
 (()=>{let q=0;const send=(c,i)=>console.log("${STRIP_PREFIX}"+(++q)+":"+c+":"+i);
 const ns="http://www.w3.org/2000/svg";const cross=()=>{const s=document.createElementNS(ns,"svg");s.setAttribute("viewBox","0 0 10 10");
@@ -94,13 +110,15 @@ window.__m4t=(st)=>{const nav=document.getElementById("s");nav.textContent="";fo
 const el=document.createElement("div");el.className="tab"+(tb.active?" on":"");el.setAttribute("role","tab");
 el.setAttribute("aria-selected",String(tb.active));el.tabIndex=tb.active?0:-1;el.title=tb.title;
 const m=document.createElement("span");m.className="mono"+(tb.loading?" busy":"");m.textContent=tb.mono;
+let ic=m;if(tb.icon&&tb.icon.startsWith("data:image/")){const g=document.createElement("img");g.className="fav"+(tb.loading?" busy":"");
+g.alt="";g.src=tb.icon;g.addEventListener("error",()=>g.replaceWith(m));ic=g}
 const n=document.createElement("span");n.className="name";n.textContent=tb.title;
 const x=document.createElement("button");x.type="button";x.className="x";x.tabIndex=-1;x.setAttribute("aria-label",st.closeLabel+": "+tb.title);
 x.title=st.closeLabel;x.append(cross());x.addEventListener("click",(e)=>{e.stopPropagation();send("close",tb.id)});
 el.addEventListener("mousedown",(e)=>{if(e.button===0&&!e.target.closest(".x"))send("select",tb.id)});
 el.addEventListener("auxclick",(e)=>{if(e.button===1){e.preventDefault();send("close",tb.id)}});
 el.addEventListener("keydown",(e)=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();send("select",tb.id)}});
-el.append(m,n,x);nav.append(el)}};})();
+el.append(ic,n,x);nav.append(el)}};})();
 </script></body></html>`;
 const STRIP_URL = `data:text/html;charset=utf-8,${encodeURIComponent(STRIP_HTML)}`;
 
@@ -130,7 +148,7 @@ export class ExtraPages {
 
   private extras(accountId: string): Extras {
     let x = this.byAccount.get(accountId);
-    if (!x) this.byAccount.set(accountId, (x = { popups: new Set(), win: null, tabs: new Map(), state: EMPTY_TABS, stripReady: false, lastBounds: null }));
+    if (!x) this.byAccount.set(accountId, (x = { popups: new Set(), win: null, tabs: new Map(), state: EMPTY_TABS, stripReady: false, lastBounds: null, icons: new Map() }));
     return x;
   }
 
@@ -237,7 +255,7 @@ export class ExtraPages {
     const win = this.ensureWindow(accountId);
     const wc = view.webContents;
     const id = this.nextTabId++;
-    const tab: Tab = { id, view, title: "", host: urlParts(wc.getURL() || "").host, loading: true };
+    const tab: Tab = { id, view, title: "", host: urlParts(wc.getURL() || "").host, loading: true, icon: null, iconKey: "" };
     x.tabs.set(id, tab);
     wc.setWebRTCIPHandlingPolicy(WEBRTC);
     this.attach(accountId, wc, () => true, () => x.win);
@@ -254,9 +272,16 @@ export class ExtraPages {
       this.refresh(accountId);
     });
     const navigated = (_e: unknown, url: string) => {
-      tab.host = urlParts(url).host;
+      const host = urlParts(url).host;
+      // Another site: drop the old site's icon until the new page lists its own.
+      if (host !== tab.host) {
+        tab.icon = null;
+        tab.iconKey = "";
+      }
+      tab.host = host;
       this.refresh(accountId);
     };
+    wc.on("page-favicon-updated", (_e, favicons) => void this.setFavicon(accountId, tab, favicons));
     wc.on("did-navigate", navigated);
     wc.on("did-navigate-in-page", navigated);
     wc.on("before-input-event", (e, input) => this.onKey(accountId, e, input));
@@ -270,6 +295,70 @@ export class ExtraPages {
     if (!background) {
       win.focus();
       wc.focus();
+    }
+  }
+
+  /** AC-FAV-01 — the page's favicon list → a checked data: URL on the tab (monogram when none is usable). */
+  private async setFavicon(accountId: string, tab: Tab, favicons: string[]): Promise<void> {
+    const src = pickFavicon(favicons);
+    if (!src) return;
+    if (src.kind === "inline") {
+      const icon = faviconDataUrl(src.bytes);
+      tab.iconKey = "inline";
+      if (icon !== tab.icon) {
+        tab.icon = icon;
+        this.refresh(accountId);
+      }
+      return;
+    }
+    if (tab.iconKey === src.url) return;
+    tab.iconKey = src.url;
+    const x = this.extras(accountId);
+    let icon = x.icons.get(src.url);
+    if (icon === undefined) {
+      icon = await this.fetchFavicon(accountId, src.url);
+      x.icons.set(src.url, icon);
+      while (x.icons.size > ICON_CACHE_MAX) x.icons.delete(x.icons.keys().next().value as string);
+    }
+    // The tab moved on (another page, or closed) while the icon was on its way.
+    if (tab.iconKey !== src.url || !x.tabs.has(tab.id)) return;
+    tab.icon = icon;
+    this.refresh(accountId);
+  }
+
+  private async fetchFavicon(accountId: string, url: string): Promise<string | null> {
+    try {
+      // The account's own session: the same proxy as its pages, never a direct connection.
+      const res = await this.host.session(accountId).fetch(url, { signal: AbortSignal.timeout(ICON_TIMEOUT_MS), credentials: "omit", redirect: "follow" });
+      if (!res.ok || !res.body) return null;
+      const declared = Number(res.headers.get("content-length") ?? 0);
+      if (declared > FAVICON_MAX_BYTES) {
+        await res.body.cancel().catch(() => undefined);
+        return null;
+      }
+      const reader = res.body.getReader();
+      const parts: Uint8Array[] = [];
+      let size = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > FAVICON_MAX_BYTES) {
+          await reader.cancel().catch(() => undefined);
+          return null;
+        }
+        parts.push(value);
+      }
+      const bytes = new Uint8Array(size);
+      let at = 0;
+      for (const p of parts) {
+        bytes.set(p, at);
+        at += p.byteLength;
+      }
+      return faviconDataUrl(bytes);
+    } catch {
+      // Offline, proxy refused, timeout: the monogram stays. Never logged — favicon URLs can carry a path.
+      return null;
     }
   }
 
@@ -397,7 +486,7 @@ export class ExtraPages {
       closeLabel: t("Đóng trang"),
       tabs: x.state.order.flatMap((id) => {
         const tab = x.tabs.get(id);
-        return tab ? [{ id, title: tab.title || tab.host || loading, mono: tabMonogram(tab.host), loading: tab.loading, active: id === x.state.active }] : [];
+        return tab ? [{ id, title: tab.title || tab.host || loading, mono: tabMonogram(tab.host), icon: tab.icon, loading: tab.loading, active: id === x.state.active }] : [];
       }),
     };
     void x.win.webContents.executeJavaScript(`window.__m4t && window.__m4t(${JSON.stringify(payload)})`).catch(() => undefined);
@@ -430,6 +519,7 @@ export class ExtraPages {
   /** Account removed: close everything and forget it. */
   forget(accountId: string): void {
     this.closeAll(accountId, false);
+    this.byAccount.get(accountId)?.icons.clear();
     this.byAccount.delete(accountId);
   }
 
@@ -443,7 +533,7 @@ export class ExtraPages {
       window: alive(x.win) ? { visible: x.win.isVisible(), title: x.win.getTitle(), bounds: rectOf(x.win.getBounds()) } : null,
       tabs: x.state.order.flatMap((id) => {
         const tab = x.tabs.get(id);
-        return tab ? [{ id, title: tab.title, host: tab.host, active: id === x.state.active, bounds: tab.view.getVisible() ? rectOf(tab.view.getBounds()) : null, webrtc: tab.view.webContents.getWebRTCIPHandlingPolicy() }] : [];
+        return tab ? [{ id, title: tab.title, host: tab.host, active: id === x.state.active, bounds: tab.view.getVisible() ? rectOf(tab.view.getBounds()) : null, webrtc: tab.view.webContents.getWebRTCIPHandlingPolicy(), icon: !!tab.icon }] : [];
       }),
       stripVisible: stripVisible(x.tabs.size),
     };

@@ -1,10 +1,10 @@
 import type { Author, Release } from "./types";
 
 /**
- * Public origin used for canonical, hreflang, sitemap and og:image (R3-WEB.2).
- * Switch to the custom domain only once its DNS points at the published site (D-3).
+ * Public origin used for canonical, hreflang, sitemap, og:image and the app's update manifest (R3-WEB.2, AC-WEB-01).
+ * The custom domain is the primary address; muse4ai.lovable.app answers with a 302 to it (measured 06/11/2026).
  */
-export const SITE_URL = "https://muse4ai.lovable.app";
+export const SITE_URL = "https://muse4ai.andrewbabo.com";
 
 /**
  * The public source repository (MIT). One entry so the site, the guide and the
@@ -32,6 +32,19 @@ export const AUTHOR: Author = {
 
 /** Newest first. `url = null` keeps the download page in "private beta" mode. */
 export const RELEASES: Release[] = [
+  {
+    version: "2.0.0-beta.34",
+    date: "2026-11-06",
+    bytes: 171756320,
+    sha256: "B59214CAEDCF71C45F68DDC9ADFE0CCD405F8B9F941E07286A561D844B4655C5",
+    url: "/__l5e/assets-v1/8670ef65-b3f2-4b3a-a2ec-5ed06c9a2dbb/muse4ai-setup-win-x64.exe",
+    notes: [
+      { en: "Muse4AI now checks for new versions by itself. When one is out, open Settings › About and choose Download and install: it downloads, checks the file, installs and opens again in about a minute — your accounts, queue and library stay as they are.", vi: "Muse4AI giờ tự kiểm tra bản mới. Khi có bản mới, mở Cài đặt › Giới thiệu và chọn Tải và cài: app tự tải, kiểm tệp, cài rồi mở lại sau khoảng một phút — tài khoản, hàng chờ và thư viện vẫn nguyên." },
+      { en: "If a new version gives you trouble, go back to the previous one from the same screen. The app only offers this when that version can still read your data.", vi: "Nếu bản mới có vấn đề, bạn quay lại bản trước ngay trên màn hình đó. App chỉ mời quay lại khi bản đó còn đọc được dữ liệu của bạn." },
+      { en: "Muse4AI now appears in Windows Settings › Apps. Uninstalling opens a small window in your language: your image and video library is always kept, and you choose whether to keep accounts and settings for later.", vi: "Muse4AI giờ có trong Cài đặt Windows › Ứng dụng. Khi gỡ, một cửa sổ nhỏ hiện bằng ngôn ngữ của bạn: thư viện ảnh và video luôn được giữ, còn tài khoản và cài đặt thì bạn chọn giữ lại hay xoá." },
+      { en: "Pages opened from the Muse window now show each site's own icon on their tabs.", vi: "Các trang mở từ cửa sổ Muse giờ hiện biểu tượng riêng của từng trang trên thẻ tab." },
+    ],
+  },
   {
     version: "2.0.0-beta.33",
     date: "2026-11-06",

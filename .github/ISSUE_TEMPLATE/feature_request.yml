@@ -1,0 +1,30 @@
+name: Idea / Đề xuất
+description: Suggest something Muse4AI could do better. / Đề xuất điều Muse4AI có thể làm tốt hơn.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do? / Bạn đang muốn làm gì?
+      description: The job you want done, not the solution yet. / Việc cần làm, chưa cần giải pháp.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea / Ý tưởng của bạn
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do today instead / Hiện bạn đang làm cách nào
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks / Kiểm tra
+      options:
+        - label: I searched existing issues and the guide. / Tôi đã tìm trong issue cũ và hướng dẫn.
+          required: true
+        - label: No keys, tokens or personal data in this request. / Không có khoá, token hay dữ liệu cá nhân.
+          required: true

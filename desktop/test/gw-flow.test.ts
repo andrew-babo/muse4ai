@@ -578,7 +578,10 @@ describe("Build 2.0 R113 — observability", () => {
       now: () => h.clock.t,
     });
     const zip = services.diagnosticsZip().toString("utf8");
-    const summary = JSON.parse(zip.slice(zip.indexOf("{"), zip.indexOf("\n}") + 2)) as { counters24h: { account: string; path: string; sent: number; completed: number; errors: Record<string, number>; medianMs: number | null }[] };
+    // The archive is stored (not compressed): summary.json's text starts right after its name in the local header.
+    // (Searching for the first "{" broke when the header's CRC happened to contain that byte.)
+    const at = zip.indexOf("summary.json{") + "summary.json".length;
+    const summary = JSON.parse(zip.slice(at, zip.indexOf("\n}", at) + 2)) as { counters24h: { account: string; path: string; sent: number; completed: number; errors: Record<string, number>; medianMs: number | null }[] };
     expect(summary.counters24h).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ account: "Mây", path: "http", sent: 1, completed: 1, errors: {} }),

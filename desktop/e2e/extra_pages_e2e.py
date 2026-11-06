@@ -13,6 +13,8 @@ Covers the "E" part of AC-PRXS-01/09 and AC-XWIN-01…09 (the "W" part — the s
   XWIN-07  sign-in done keeps tabs, closes popups; cancel/end closes everything
   XWIN-08  popups and tabs go through the account's proxy (seen in the local proxy log), WebRTC disable_non_proxied_udp
   XWIN-09  takeover dialog shows the R155 hint in Vietnamese and English
+  FAV-01   (Build 3.3) a tab shows its page's favicon, fetched through the account proxy; a page whose "icon" is not an
+           image, or has none, keeps the letter
 
 The account's proxy is a tiny local forward proxy (127.0.0.1) that only reaches the local test site, so nothing leaves
 the machine. Run from desktop/ after `npm run build`:  python3 e2e/extra_pages_e2e.py
@@ -20,6 +22,8 @@ Screenshots of the whole virtual screen go to $OUT.
 """
 import asyncio
 import http.server
+import struct
+import zlib
 import json
 import os
 import shutil
@@ -65,8 +69,19 @@ if(ok)window.opener.postMessage('oauth-ok','*');setTimeout(()=>window.close(),Nu
 }
 
 
+def _png(w=16, h=16, rgb=(46, 99, 230)):
+    raw = b"".join(b"\x00" + bytes(rgb) * w for _ in range(h))
+    chunk = lambda t, d: struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b"")
+
+
+FAVICON = _png()
+
+
 def page_html(n):
-    return f"""<!doctype html><title>Page {n}</title><body style="font:16px system-ui;background:#f4fff4"><h1>Page {n}</h1>
+    # FAV-01: pages 1–2 list a real PNG favicon; "bad" lists an "icon" that is really an HTML page; others list none.
+    icon = '<link rel="icon" href="/fav.png">' if n in ("1", "2") else '<link rel="icon" href="/not-an-image.ico">' if n == "bad" else ""
+    return f"""<!doctype html><title>Page {n}</title>{icon}<body style="font:16px system-ui;background:#f4fff4"><h1>Page {n}</h1>
 <p>Extra page opened by the Muse window.</p></body>"""
 
 
@@ -76,11 +91,20 @@ class Site(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split("?")[0]
+        if path == "/fav.png":
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.send_header("Content-Length", str(len(FAVICON)))
+            self.end_headers()
+            self.wfile.write(FAVICON)
+            return
         if path == "/page.html":
             n = self.path.split("n=")[-1] if "n=" in self.path else "?"
             body = page_html(n)
         elif path in PAGES:
             body = PAGES[path]
+        elif path == "/not-an-image.ico":
+            body = "<!doctype html><title>Not found</title><p>This is not an icon.</p>"
         else:
             self.send_response(404)
             self.end_headers()
@@ -353,7 +377,14 @@ async def scenario(browser, page):
         act = [t["title"] for t in st["tabs"] if t["active"]]
         check("XWIN-03 clicking a tab in the strip selects it", act == ["Page 1"], f"{act}")
         labels = await strip.evaluate("() => [...document.querySelectorAll('.tab')].map(t => t.textContent)")
-        check("XWIN-03 strip shows a letter + the page title, nothing loaded from the network", labels == ["1Page 1", "2Page 2"] or all("Page" in x for x in labels), f"{labels}")
+        check("XWIN-03 strip shows an icon or letter + the page title, nothing loaded from the network", labels == ["1Page 1", "2Page 2"] or all("Page" in x for x in labels), f"{labels}")
+        # FAV-01 — both pages list /fav.png: main fetched it through the account proxy and the strip shows it as data:
+        st = await wait_for(lambda: _icons(page, may["id"], 2), 8) or await extra(page, may["id"], "state")
+        imgs = await strip.evaluate("() => [...document.querySelectorAll('img.fav')].map(i => ({ src: i.src.slice(0, 22), ok: i.complete && i.naturalWidth === 16 }))")
+        check("FAV-01 both tabs show the site's favicon (decoded 16 px image from a data: URL)", len(imgs) == 2 and all(i["ok"] and i["src"] == "data:image/png;base64," for i in imgs), json.dumps(imgs))
+        check("FAV-01 the favicon was fetched through the account's proxy", any(p.endswith("/fav.png") for _, p in proxy_log), "")
+        csp = await strip.evaluate("() => document.querySelector('meta[http-equiv=Content-Security-Policy]').content")
+        check("FAV-01 strip CSP allows data: images only", "img-src data:" in csp and "default-src 'none'" in csp, csp)
     else:
         check("XWIN-03 strip page found", False)
 
@@ -368,6 +399,27 @@ async def scenario(browser, page):
         check("XWIN-03 Ctrl+W closes the active tab; one tab left → strip hides", len(st["tabs"]) == 1 and st["tabs"][0]["title"] == "Page 2" and not st["stripVisible"], json.dumps([t["title"] for t in st["tabs"]]))
     else:
         check("XWIN-03 Ctrl+W (tab target found)", False)
+
+    # FAV-01 — an "icon" that is really an HTML page is refused: the tab keeps its letter
+    await muse.evaluate(f"() => window.open('http://127.0.0.1:{SITE}/page.html?n=bad', '_blank')")
+    await wait_for(lambda: _tab_titled(page, may["id"], "Page bad"), 8)
+    await asyncio.sleep(2.5)
+    st = await extra(page, may["id"], "state")
+    bad = [t for t in st["tabs"] if t["title"] == "Page bad"]
+    fetched = any(p.endswith("/not-an-image.ico") for _, p in proxy_log)
+    check("FAV-01 a non-image “icon” is fetched via the proxy, refused, and the tab keeps its letter", bool(bad) and bad[0]["icon"] is False and fetched, json.dumps(bad))
+    strip = await find_page(browser, lambda u: u.startswith("data:text/html"))
+    if strip:
+        await asyncio.sleep(0.4)
+        marks = await strip.evaluate("() => [...document.querySelectorAll('.tab')].map(t => t.querySelector('img.fav') ? 'img' : (t.querySelector('.mono')?.textContent || ''))")
+        check("FAV-01 strip: real icon for Page 2, letter “1” for the refused one", marks == ["img", "1"], json.dumps(marks))
+        screen("x05_tabs_favicons")
+    await invoke(page, "__test.extra", {"accountId": may["id"], "op": "state"})
+    if bad:
+        # Close it again so the later limit checks start from the same tab count as before.
+        if strip:
+            await strip.evaluate("() => document.querySelectorAll('.tab .x')[1].click()")
+        await wait_for(lambda: _tabs(page, may["id"], 1), 5)
 
     # XWIN-04 schemes
     res = await muse.evaluate("() => ['file:///etc/hostname', 'chrome://settings', 'mailto:a@b.c', 'ms-settings:privacy', 'devtools://devtools/bundled/inspector.html'].map(u => window.open(u) === null)")
@@ -432,6 +484,11 @@ async def _popups(page, acc, n):
 async def _tab_titled(page, acc, title):
     st = await invoke(page, "__test.extra", {"accountId": acc, "op": "state"})
     return st if any(t["title"] == title for t in st["tabs"]) else None
+
+
+async def _icons(page, acc, n):
+    st = await invoke(page, "__test.extra", {"accountId": acc, "op": "state"})
+    return st if sum(1 for t in st["tabs"] if t.get("icon")) >= n else None
 
 
 async def _tabs(page, acc, n, titled=False):

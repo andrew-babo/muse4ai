@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { EventEmitter } from "node:events";
 import fs from "node:fs";
@@ -24,7 +24,7 @@ import { ElectronHttpChannel, type HttpChannel } from "./adapter/muse/httpChanne
 import type { MuseAdapter, VibesAdapter } from "./adapter/types";
 import { FakeVibesAdapter, type FakeVibesConfig, type FakeVibesStep } from "./adapter/vibes/fake";
 import { Coordinator, type Notice } from "./coordinator";
-import { CorruptStoreError, dailyBackup, latestGoodBackup, MigrationError, openDatabase, restoreFromBackup, type SqliteModule } from "./db";
+import { CorruptStoreError, dailyBackup, latestGoodBackup, MigrationError, openDatabase, readSchemaVersion, restoreFromBackup, SCHEMA_VERSION, type SqliteModule } from "./db";
 import { IpcDispatcher, type ShellOps } from "./ipcHandlers";
 import { Logger } from "./logger";
 import { MediaStore } from "./media";
@@ -39,11 +39,21 @@ import { toastId } from "./toastId";
 import { buildToastXml, launchArgument, resolveNoticeRoute, routeFromActivation, routeFromArgv, runFromActivation, TOAST_ACTIVATOR_CLSID } from "./toast";
 import { parseReducedMotion, parseTransparency } from "./winDisplay";
 import { loadFixtures } from "./fixtures";
+import { detectInstall, Updater } from "./updater";
+import { UPDATE_MANIFEST_PATH } from "../shared/updates";
+import { SITE_URL } from "@content/site";
 
 // Electron main process: the single writer of local data (AGENTS.md). Wires store, coordinator, Muse sessions and the UI.
 
 const AUMID = "vn.musestudio.app";
 const TEST = process.env.MUSE4AI_TEST === "1";
+// Isolated Windows lab only: a debugging port carried by the environment, so a copy the installer reopens after an
+// in-app update (no command-line flags) can still be inspected. Loopback only; ignored outside test mode.
+const TEST_CDP = TEST ? /^\d{4,5}$/.exec(process.env.MUSE4AI_TEST_CDP ?? "")?.[0] : undefined;
+if (TEST_CDP) {
+  app.commandLine.appendSwitch("remote-debugging-port", TEST_CDP);
+  app.commandLine.appendSwitch("remote-debugging-address", "127.0.0.1");
+}
 /** Id of this run of the app, carried by its toasts (a toast from an older run never opens a login window). */
 const RUN_ID = randomUUID().replace(/-/g, "").slice(0, 12);
 /** Upper bound before the post-first-frame work runs anyway (a window started hidden never draws a frame). */
@@ -516,6 +526,38 @@ async function boot(): Promise<void> {
     tunnel: { fetch: (input, init) => net.fetch(input as string, init as RequestInit) },
   });
 
+  // ---------- Build 3.3 updates + rollback (AC-UPD, AC-RBK). Test mode may point at a lab release on 127.0.0.1.
+  const testUpdateUrl = TEST ? process.env.MUSE4AI_UPDATE_URL : undefined;
+  const updater = new Updater({
+    version: app.getVersion(),
+    schema: SCHEMA_VERSION,
+    manifestUrl: testUpdateUrl || `${SITE_URL}${UPDATE_MANIFEST_PATH}`,
+    loopbackHttp: !!testUpdateUrl,
+    fetch: (url, init) => net.fetch(url, init),
+    updatesDir: path.join(paths.local, "updates"),
+    roamingDir: paths.roaming,
+    layout: detectInstall(process.execPath, app.getVersion()),
+    autoCheck: () => coord.settings().updateCheck,
+    locale: () => getLocale(),
+    diskFree,
+    inFlight: () => coord.inFlightCount(),
+    spawnDetached: (file, args, opts) => {
+      const child = spawn(file, args, { detached: true, stdio: "ignore", windowsHide: false, windowsVerbatimArguments: !!opts?.verbatim });
+      child.on("error", (e) => logger.log("error", "update", "could not start", { file: path.basename(file), error: String(e) }));
+      child.unref();
+    },
+    quit: () => doQuit(),
+    emit: (s) => emit("update", s),
+    // AC-UPD-04: once per version, in the app and (when the window is not in front) as a Windows notification.
+    announce: (version) => notify({ kind: "info", title: `Có bản mới: ${version}`, body: "Mở Cài đặt › Giới thiệu để tải và cài — dữ liệu được giữ nguyên.", route: "/settings/about" }),
+    log: (l, m, d) => logger.log(l, "update", m, d),
+  });
+  try {
+    updater.init(readSchemaVersion(repo.db));
+  } catch (e) {
+    logger.log("warn", "update", "init failed", { error: String(e) });
+  }
+
   // ---------- window, tray, notifications
   let quitting = false;
   let tray: Tray | null = null;
@@ -713,6 +755,7 @@ async function boot(): Promise<void> {
     if (quitting) return;
     quitting = true;
     logger.log("info", "app", "quit", { inFlight: coord.inFlightCount() });
+    updater.stop();
     api.killNow();
     void api.shutdown();
     void coord.stop();
@@ -874,6 +917,7 @@ async function boot(): Promise<void> {
     }
     refreshShortcuts();
     coord.revalidateSessions();
+    updater.schedule();
     logger.log("info", "app", "after first frame", { via, ms: Date.now() - t0 });
   };
   const dispatcher = new IpcDispatcher(coord, services, shellOps, {
@@ -882,6 +926,7 @@ async function boot(): Promise<void> {
     api,
     startupPhases: () => marks,
     onFirstFrame: () => setImmediate(() => afterFirstFrame("first frame")),
+    updater,
   });
 
   // Windows without a working COM activator relaunches the exe with the toast's launch argument; the

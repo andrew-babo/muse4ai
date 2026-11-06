@@ -176,10 +176,10 @@ export const DOCS_SETTINGS: DocArticle[] = [
     slug: "updates-and-backups",
     chapter: "settings",
     order: 3,
-    title: { en: "Updates, rollback, and backups", vi: "Cập nhật, quay lại và sao lưu" },
+    title: { en: "Updates, rollback, uninstall, and backups", vi: "Cập nhật, quay lại, gỡ cài và sao lưu" },
     summary: {
-      en: "Install a newer version without deleting your data, understand rollback limits, and recover from a checked backup.",
-      vi: "Cài phiên bản mới mà không xoá dữ liệu, hiểu giới hạn khi quay về bản cũ và khôi phục từ bản sao lưu đã được kiểm tra.",
+      en: "Update from inside the app without losing data, go back to the kept previous version, uninstall cleanly from Windows Settings, and recover from a backup.",
+      vi: "Cập nhật ngay trong app mà không mất dữ liệu, quay lại bản trước còn giữ, gỡ cài gọn từ Cài đặt Windows và khôi phục từ bản sao lưu đã kiểm tra.",
     },
     before: [
       {
@@ -193,18 +193,25 @@ export const DOCS_SETTINGS: DocArticle[] = [
     ],
     steps: [
       {
-        title: { en: "Check the version and quit fully", vi: "Xem phiên bản rồi thoát hẳn" },
+        title: { en: "See your version and the update check", vi: "Xem phiên bản và việc kiểm tra bản mới" },
         body: {
-          en: "Check Settings › About. The EXE installer closes the app for you; with the ZIP, right-click the tray icon and choose Quit first. The window’s X button only hides the app in the tray.",
-          vi: "Xem Cài đặt › Giới thiệu. Bộ cài EXE tự đóng app giúp bạn; nếu dùng ZIP, hãy bấm phải biểu tượng ở khay hệ thống và chọn Thoát trước. Nút X của cửa sổ chỉ ẩn app xuống khay.",
+          en: "Settings › About shows the version you use and an Updates card. When the app opens and every 12 hours it reads one small file on the Muse4AI website to see whether a newer version exists; it sends none of your data. Turn the switch off to stop checking, or press Check now at any time.",
+          vi: "Cài đặt › Giới thiệu hiện phiên bản đang dùng và thẻ Cập nhật. Lúc mở app và mỗi 12 giờ, app đọc một tệp nhỏ trên website Muse4AI để biết có bản mới không; không gửi dữ liệu nào của bạn. Tắt công tắc nếu không muốn app kiểm tra, hoặc bấm Kiểm tra ngay bất cứ lúc nào.",
         },
         shot: "settings-about",
       },
       {
-        title: { en: "Install the newer package", vi: "Cài gói phiên bản mới" },
+        title: { en: "Update from inside the app", vi: "Cập nhật ngay trong app" },
         body: {
-          en: "Run the new EXE installer, or extract the new ZIP and run install.ps1. Installing over the current version preserves sign-ins, settings, queue, and library. Automatic updating is not available.",
-          vi: "Chạy bộ cài EXE mới, hoặc giải nén ZIP mới rồi chạy install.ps1. Cài đè giữ phiên đăng nhập, cài đặt, hàng chờ và thư viện. App chưa có tự cập nhật.",
+          en: "When a newer version is out, a dot appears next to Settings and the app tells you once. Open Settings › About and choose Download and install: the app downloads the installer, checks its SHA-256 fingerprint, then closes, installs, and opens again in about a minute. Sign-ins, settings, queue, and library are kept. If jobs are running it asks first: jobs already sent are reconciled when the app reopens, jobs not yet sent stay in the queue.",
+          vi: "Khi có bản mới, Cài đặt có một chấm nhỏ và app báo bạn một lần. Mở Cài đặt › Giới thiệu rồi chọn Tải và cài: app tải bộ cài, kiểm dấu vân tay SHA-256, rồi tự đóng, cài và mở lại sau khoảng một phút. Phiên đăng nhập, cài đặt, hàng chờ và thư viện được giữ nguyên. Nếu còn việc đang chạy, app hỏi trước: việc đã gửi sẽ được đối soát khi mở lại, việc chưa gửi vẫn nằm trong hàng chờ.",
+        },
+      },
+      {
+        title: { en: "Or install the newer package yourself", vi: "Hoặc tự cài gói phiên bản mới" },
+        body: {
+          en: "You can still run a new EXE installer from the website (it closes the app for you), or extract the new ZIP, quit from the tray icon, and run install.ps1. Installing over the current version keeps your data the same way.",
+          vi: "Bạn vẫn có thể chạy bộ cài EXE mới tải từ website (bộ cài tự đóng app), hoặc giải nén ZIP mới, thoát app từ biểu tượng ở khay rồi chạy install.ps1. Cài đè vẫn giữ dữ liệu như trên.",
         },
       },
       {
@@ -222,14 +229,21 @@ export const DOCS_SETTINGS: DocArticle[] = [
         },
       },
       {
-        title: { en: "Roll back carefully", vi: "Quay về bản cũ cẩn thận" },
+        title: { en: "Go back to the previous version", vi: "Quay lại bản trước" },
         body: {
-          en: "Quit first, then run the rollback command from the extracted installer folder. An older version may not read an upgraded database. If it reports newer-version data, preserve the current database and follow the installer guide’s pre-upgrade backup procedure; do not overwrite data casually.",
-          vi: "Thoát hẳn trước, rồi chạy lệnh quay lại từ thư mục bộ cài đã giải nén. Bản cũ có thể không đọc được cơ sở dữ liệu đã nâng cấp. Nếu báo dữ liệu thuộc bản mới hơn, giữ lại dữ liệu hiện tại và làm theo quy trình dùng bản sao trước nâng cấp trong hướng dẫn cài; không tuỳ tiện ghi đè.",
+          en: "Each update keeps one previous version on the PC. If the new one has a problem, open Settings › About › Previous version and choose Go back to this version; the app closes and opens the older one with the same data. It only offers this when that version can read your current data — after a data-store upgrade an older version cannot, and the card says so. Without the app, the uninstall window offers the same rollback, or run the command below.",
+          vi: "Mỗi lần cập nhật, máy giữ lại một bản trước. Nếu bản mới có vấn đề, mở Cài đặt › Giới thiệu › Bản trước rồi chọn Quay lại bản này; app đóng và mở bản cũ với cùng dữ liệu. App chỉ mời quay lại khi bản đó đọc được dữ liệu hiện tại — sau khi kho dữ liệu đã nâng cấp thì bản cũ không đọc được, và thẻ sẽ nói rõ. Khi không mở được app, cửa sổ gỡ cài có cùng lựa chọn quay lại, hoặc chạy lệnh dưới đây.",
         },
         code: {
           lang: "powershell",
-          text: "powershell -ExecutionPolicy Bypass -File .\\install.ps1 -Rollback",
+          text: "powershell -ExecutionPolicy Bypass -File \"$env:LOCALAPPDATA\\Programs\\Muse4AI\\tools\\install.ps1\" -Rollback",
+        },
+      },
+      {
+        title: { en: "Uninstall from Windows Settings", vi: "Gỡ cài từ Cài đặt Windows" },
+        body: {
+          en: "Open Windows Settings › Apps › Installed apps, find Muse4AI and choose Uninstall. A small window asks whether to also delete accounts, proxies, settings, and sign-ins saved on this PC; leave it unticked to keep them for a later reinstall. Images and videos in your library are always kept. If the app is open, it is asked to quit the normal way first.",
+          vi: "Mở Cài đặt Windows › Ứng dụng › Ứng dụng đã cài, tìm Muse4AI rồi chọn Gỡ cài đặt. Một cửa sổ nhỏ hỏi có xoá luôn tài khoản, proxy, cài đặt và phiên đăng nhập lưu trên máy không; để trống nếu muốn giữ lại cho lần cài sau. Ảnh và video trong thư viện luôn được giữ. Nếu app đang mở, app được nhờ tự thoát theo cách bình thường trước.",
         },
       },
       {
@@ -254,6 +268,20 @@ export const DOCS_SETTINGS: DocArticle[] = [
         },
       },
       {
+        q: { en: "The Updates card says this copy cannot install by itself.", vi: "Thẻ Cập nhật báo bản này không tự cài được." },
+        a: {
+          en: "That copy was not installed with the EXE or install.ps1 (for example it runs from another folder). Open the download page, run the installer once, and later updates work from inside the app.",
+          vi: "Bản đó không được cài bằng bộ cài EXE hay install.ps1 (ví dụ chạy từ một thư mục khác). Mở trang tải về, chạy bộ cài một lần, các lần cập nhật sau sẽ làm được ngay trong app.",
+        },
+      },
+      {
+        q: { en: "Checking for updates failed.", vi: "Kiểm tra bản mới bị lỗi." },
+        a: {
+          en: "Usually the PC is offline or the website could not be reached. Nothing else is affected and the app keeps working; it tries again in 12 hours, or press Check now. A download that does not match its SHA-256 fingerprint is deleted and never run.",
+          vi: "Thường do máy mất mạng hoặc không vào được website. Không ảnh hưởng gì khác, app vẫn chạy bình thường; app thử lại sau 12 giờ, hoặc bấm Kiểm tra ngay. Tệp tải về không khớp dấu vân tay SHA-256 sẽ bị xoá và không bao giờ được chạy.",
+        },
+      },
+      {
         q: { en: "Will restoring a backup keep recent changes?", vi: "Khôi phục có giữ thay đổi mới không?" },
         a: {
           en: "Not necessarily. Jobs and settings changed after that backup can be lost. Keep the current files before manual recovery.",
@@ -270,7 +298,7 @@ export const DOCS_SETTINGS: DocArticle[] = [
     ],
     related: ["install", "troubleshooting", "privacy-and-data"],
     appRoute: "/settings/about",
-    updated: "2026-11-02",
+    updated: "2026-11-06",
   },
   {
     slug: "privacy-and-data",
@@ -310,8 +338,8 @@ export const DOCS_SETTINGS: DocArticle[] = [
       {
         title: { en: "Understand the project boundary", vi: "Hiểu ranh giới của dự án" },
         body: {
-          en: "The app does not send your jobs, files, keys, or sign-in sessions to Andrew Babo or the Muse4AI website. Connecting an agent or enabling a tunnel introduces the separate providers you choose.",
-          vi: "App không gửi công việc, tệp, khoá hoặc phiên đăng nhập của bạn tới Andrew Babo hay website Muse4AI. Khi kết nối agent hoặc bật đường hầm, bạn sử dụng thêm các nhà cung cấp riêng do mình chọn.",
+          en: "The app does not send your jobs, files, keys, or sign-in sessions to Andrew Babo or the Muse4AI website. Its update check only downloads a small public file from the website (you can turn it off in Settings › About). Connecting an agent or enabling a tunnel introduces the separate providers you choose.",
+          vi: "App không gửi công việc, tệp, khoá hoặc phiên đăng nhập của bạn tới Andrew Babo hay website Muse4AI. Việc kiểm tra bản mới chỉ tải một tệp công khai nhỏ từ website (tắt được trong Cài đặt › Giới thiệu). Khi kết nối agent hoặc bật đường hầm, bạn sử dụng thêm các nhà cung cấp riêng do mình chọn.",
         },
       },
       {
@@ -345,6 +373,6 @@ export const DOCS_SETTINGS: DocArticle[] = [
     ],
     related: ["api-keys", "remote-access", "accounts-and-limits"],
     appRoute: "/settings/security",
-    updated: "2026-11-02",
+    updated: "2026-11-06",
   },
 ];

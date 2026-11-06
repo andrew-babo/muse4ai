@@ -68,6 +68,7 @@ export function defaultSettings(libraryDir: string): Settings {
     bridgeHttpEnabled: true,
     concurrencyUiPages: DEFAULT_UI_PAGES,
     language: DEFAULT_LOCALE,
+    updateCheck: true,
   };
 }
 

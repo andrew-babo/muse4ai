@@ -12,6 +12,7 @@ import {
   popupBounds,
   popupPlacement,
   selectTab,
+  STRIP_CSP,
   stripVisible,
   tabMonogram,
   tabShortcut,
@@ -187,5 +188,42 @@ describe("tabs — AC-XWIN-03", () => {
     expect(tabMonogram("")).toBe("•");
     expect(windowTitle("Meta Business Suite", "Mây", "Đang tải…")).toBe("Meta Business Suite — Mây");
     expect(windowTitle("  ", "Mây", "Đang tải…")).toBe("Đang tải… — Mây");
+  });
+});
+
+// Build 3.3 AC-FAV-01 — the tab's real icon, fetched through the account's session; only real images ≤ 64 KiB.
+import { faviconDataUrl, FAVICON_MAX_BYTES, pickFavicon, sniffFavicon } from "../src/shared/extraPages";
+
+describe("favicons (AC-FAV-01)", () => {
+  const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]);
+  const ico = new Uint8Array([0, 0, 1, 0, 1, 0, 16, 16]);
+  const svg = new TextEncoder().encode('<?xml version="1.0"?>\n<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"></svg>');
+  it("picks the first web URL, or an inline image, and ignores other schemes", () => {
+    expect(pickFavicon(["file:///C:/x.ico", "https://accounts.example.com/favicon.ico", "http://x/y.png"])).toEqual({ kind: "fetch", url: "https://accounts.example.com/favicon.ico" });
+    expect(pickFavicon(["chrome://favicon/x", "blob:https://x/1"])).toBeNull();
+    expect(pickFavicon(["https://user:pw@example.com/f.ico"])).toBeNull();
+    const inline = pickFavicon([`data:image/png;base64,${btoa(String.fromCharCode(...png))}`]);
+    expect(inline?.kind).toBe("inline");
+  });
+  it("recognises real images by their bytes, not by the server's label", () => {
+    expect(sniffFavicon(png)).toBe("image/png");
+    expect(sniffFavicon(ico)).toBe("image/x-icon");
+    expect(sniffFavicon(svg)).toBe("image/svg+xml");
+    expect(sniffFavicon(new TextEncoder().encode("<!doctype html><html>404</html>"))).toBeNull();
+  });
+  it("re-encodes an accepted icon as a data: URL and refuses oversized or unknown bytes", () => {
+    expect(faviconDataUrl(png)).toBe(`data:image/png;base64,${btoa(String.fromCharCode(...png))}`);
+    expect(faviconDataUrl(new Uint8Array(FAVICON_MAX_BYTES + 1).fill(0x89))).toBeNull();
+    expect(faviconDataUrl(new TextEncoder().encode("hello"))).toBeNull();
+    expect(FAVICON_MAX_BYTES).toBe(64 * 1024);
+  });
+});
+
+describe("tab strip CSP (AC-FAV-01)", () => {
+  it("lets the strip show data: images and nothing that reaches the network", () => {
+    const d: Record<string, string[]> = Object.fromEntries(STRIP_CSP.split(";").map((p: string) => p.trim().split(/\s+/)).map(([k, ...v]: string[]) => [k, v]));
+    expect(d["default-src"]).toEqual(["'none'"]);
+    expect(d["img-src"]).toEqual(["data:"]);
+    expect(STRIP_CSP).not.toMatch(/https?:|\*|connect-src|'self'/);
   });
 });

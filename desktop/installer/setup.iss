@@ -59,13 +59,33 @@ vi.DataKept=Dữ liệu và thư viện của bạn được giữ nguyên.
 Source: "{#StageDir}\*"; Flags: dontcopy
 
 [Run]
-Filename: "{localappdata}\Programs\Muse4AI\app-{#AppVersion}\Muse4AI.exe"; Description: "{cm:LaunchApp}"; Flags: postinstall nowait skipifsilent
+Filename: "{code:AppExe}"; Description: "{cm:LaunchApp}"; Flags: postinstall nowait skipifsilent
+; Build 3.3 AC-UPD-06: the app's "Cài và mở lại" runs setup with /SILENT /RELAUNCH=1 — reopen the new version afterwards.
+Filename: "{code:AppExe}"; Flags: nowait; Check: ShouldRelaunch
 
 [Code]
+{ Build 3.3: /INSTALLROOT=<folder> installs where the running app lives (the in-app update passes it); default is the
+  standard per-user folder. Never a quote inside: the value is passed on to install.ps1 inside quotes. }
+function InstallRootDir(): String;
+begin
+  Result := ExpandConstant('{param:INSTALLROOT|}');
+  if Result = '' then Result := ExpandConstant('{localappdata}\Programs\Muse4AI');
+end;
+
+function AppExe(Param: String): String;
+begin
+  Result := InstallRootDir() + '\app-{#AppVersion}\Muse4AI.exe';
+end;
+
+function ShouldRelaunch(): Boolean;
+begin
+  Result := WizardSilent() and (ExpandConstant('{param:RELAUNCH|0}') = '1');
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ExitCode: Integer;
-  Args, ResultFile, Reason: String;
+  Args, ResultFile, Reason, Root: String;
   Lines: TArrayOfString;
   I: Integer;
 begin
@@ -75,6 +95,12 @@ begin
     ExtractTemporaryFiles('*');
     ResultFile := ExpandConstant('{tmp}\result.txt');
     Args := '-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\install.ps1') + '" -NoLaunch -CloseRunning -ResultFile "' + ResultFile + '" -Lang ' + ActiveLanguage;
+    Root := ExpandConstant('{param:INSTALLROOT|}');
+    if Root <> '' then
+    begin
+      if Pos('"', Root) > 0 then RaiseException(CustomMessage('InstallFailed'));
+      Args := Args + ' -InstallRoot "' + Root + '"';
+    end;
     if not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Args,
       ExpandConstant('{tmp}'), SW_HIDE, ewWaitUntilTerminated, ExitCode) then
       RaiseException(CustomMessage('NoPowerShell'));

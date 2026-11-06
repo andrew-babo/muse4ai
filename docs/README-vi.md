@@ -20,8 +20,8 @@ Claude, Cursor, Codex, n8n hay bất cứ công cụ nào biết gọi **REST**,
 ![Giấy phép MIT](https://img.shields.io/badge/license-MIT-2D664D?style=flat-square)
 ![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-1A50D7?style=flat-square)
 ![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-5F5A52?style=flat-square)
-![775 test](https://img.shields.io/badge/tests-775-2D664D?style=flat-square)
-![v2.0.0-beta.33](https://img.shields.io/badge/version-2.0.0--beta.33-B4762B?style=flat-square)
+![841 test](https://img.shields.io/badge/tests-841-2D664D?style=flat-square)
+![v2.0.0-beta.34](https://img.shields.io/badge/version-2.0.0--beta.34-B4762B?style=flat-square)
 
 </div>
 
@@ -116,7 +116,8 @@ bằng phiên của bạn, và giữ toàn bộ kết quả, khoá, token trong
 
 Tải bộ cài từ [trang Tải về](https://muse4ai.andrewbabo.com/vi/download), chạy nó,
 rồi thêm tài khoản Muse trong mục **Tài khoản**. Windows sẽ báo file chưa ký số —
-chọn **Thêm thông tin → Vẫn chạy**.
+chọn **Thêm thông tin → Vẫn chạy**. Sau đó app tự kiểm tra bản mới và cài ngay trong
+**Cài đặt › Giới thiệu** — không cần quay lại trang này.
 
 ### 2. Chạy từ mã nguồn
 
@@ -192,7 +193,7 @@ Bản cho agent đọc bằng Markdown: [llms.txt](https://muse4ai.andrewbabo.co
 
 ```bash
 cd desktop
-npm test            # 740 test
+npm test            # 841 test
 npm run typecheck   # TypeScript kiểm tra chặt
 npm run package:win # đóng gói ZIP + bộ cài Windows
 ```
@@ -200,13 +201,16 @@ npm run package:win # đóng gói ZIP + bộ cài Windows
 ## Kiểm tra chất lượng
 
 Mỗi lần đẩy code và mỗi thứ Hai 02:00 UTC (09:00 giờ VN), GitHub Actions chạy lại
-toàn bộ: **775 test**, kiểm lỗi code, quét lỗ hổng thư viện, quét khoá và mật khẩu
+toàn bộ: **841 test**, kiểm lỗi code, quét lỗ hổng thư viện, quét khoá và mật khẩu
 trong toàn bộ lịch sử kho, cùng gọi thật vào các endpoint công khai. Nếu lần chạy
 hằng tuần bị lỗi, GitHub tự mở một issue.
 
-- Báo cáo audit: [docs/audit/2026-11-06.md](docs/audit/2026-11-06.md)
-- Spec, kế hoạch và bằng chứng phòng thử: [docs/build-3.2/](docs/build-3.2/)
-- Báo lỗ hổng bảo mật một cách kín đáo: [SECURITY.md](SECURITY.md)
+- Báo cáo audit: [docs/audit/2026-11-06.md](audit/2026-11-06.md)
+- Spec, kế hoạch và bằng chứng phòng thử: [docs/build-3.3/](build-3.3/) (cập nhật, quay bản, gỡ cài) ·
+  [docs/build-3.2/](build-3.2/)
+- Thay đổi của từng bản: [CHANGELOG.md](../CHANGELOG.md)
+- Góp công: [CONTRIBUTING.md](../CONTRIBUTING.md) · [Quy tắc ứng xử](../CODE_OF_CONDUCT.md)
+- Báo lỗ hổng bảo mật một cách kín đáo: [SECURITY.md](../SECURITY.md)
 
 ## Nói thẳng
 
