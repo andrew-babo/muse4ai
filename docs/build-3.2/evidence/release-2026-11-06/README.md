@@ -56,9 +56,10 @@ Kiểm sau nâng cấp:
 
 ## Lùi bản
 
-Không đổi cấu trúc dữ liệu, nên beta.32 mở được kho hiện tại: thoát beta.33 → `install.ps1 -Rollback` từ gói ZIP
-beta.33 (thư mục `app-2.0.0-beta.32` vẫn còn) → nhập lại hai tác vụ `Muse4AIStart/Quit` trỏ về beta.32. Bản sao dữ liệu
-trước nâng cấp: `C:\Muse4AILab\exe-beta33\prod-backup-20261106-200043`.
+Không đổi cấu trúc dữ liệu, nên beta.32 mở được kho hiện tại: thoát beta.33 → chạy `install.ps1 -Rollback` (bản chép
+nằm cạnh bản sao lưu; thư mục `app-2.0.0-beta.32` vẫn còn) → nhập lại hai tác vụ `Muse4AIStart/Quit` từ
+`Muse4AI*.xml.orig` sau khi đổi `app-2.0.0-beta.33` thành `app-2.0.0-beta.32`. Bản sao dữ liệu trước nâng cấp:
+`C:\Muse4AILab\exe-beta33\prod-backup-20261106-200043` (giữ lại; phần còn lại của thư mục thử đã xoá, VPS trống 17,2 GB).
 
 ## Chưa kiểm
 
