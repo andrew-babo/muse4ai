@@ -75,7 +75,7 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or (Test-Path "$root/app-$version/Muse4AI.exe")) { throw 'Uninstall failed' }
           if ((Get-Content $sentinel).Trim() -ne 'preserve-ci-data') { throw 'Uninstall changed data' }
       - name: Upload downloadable installers
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Muse4AI-Windows-${{ github.run_number }}
           path: |
