@@ -22,7 +22,7 @@
     "@fontsource/jetbrains-mono": "5.3.0",
     "@modelcontextprotocol/sdk": "1.32.2",
     "@tailwindcss/vite": "4.3.4",
-    "@tanstack/react-virtual": "3.14.25",
+    "@tanstack/react-virtual": "3.14.26",
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
