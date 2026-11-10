@@ -20,8 +20,8 @@ with no cloud middleman and no per-seat fee.
 ![MIT licensed](https://img.shields.io/badge/license-MIT-2D664D?style=flat-square)
 ![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-1A50D7?style=flat-square)
 ![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-5F5A52?style=flat-square)
-![841 tests](https://img.shields.io/badge/tests-841-2D664D?style=flat-square)
-![v2.0.0-beta.34](https://img.shields.io/badge/version-2.0.0--beta.34-B4762B?style=flat-square)
+![848 tests](https://img.shields.io/badge/tests-848-2D664D?style=flat-square)
+![v2.0.0-beta.35](https://img.shields.io/badge/version-2.0.0--beta.35-B4762B?style=flat-square)
 
 </div>
 
@@ -194,7 +194,7 @@ For agents that prefer Markdown: [llms.txt](https://muse4ai.andrewbabo.com/llms.
 
 ```bash
 cd desktop
-npm test            # 841 tests
+npm test            # 848 tests
 npm run typecheck   # strict TypeScript
 npm run package:win # Windows ZIP + installer inputs
 ```
@@ -202,7 +202,7 @@ npm run package:win # Windows ZIP + installer inputs
 ## Quality checks
 
 Every push, and every Monday at 02:00 UTC, GitHub Actions re-runs the whole suite:
-**841 tests**, a type check, a dependency vulnerability scan, a secret scan across the
+**848 tests**, a type check, a dependency vulnerability scan, a secret scan across the
 full git history, and live checks against the public endpoints. If a weekly run fails,
 an issue is opened automatically.
 
