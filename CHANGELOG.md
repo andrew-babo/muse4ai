@@ -10,6 +10,8 @@ All notable changes to Muse4AI, newest first. Downloads and the Vietnamese notes
 - When one Muse account cannot connect, new jobs now go to your healthy accounts first. A job that has not been sent yet waits at most about a minute and a half, then moves to another account by itself — no more jobs stuck on “Preparing”.
 - For AI agents: the REST API now also accepts request_id in the body (same as MCP), so one recipe works on both.
 
+Installer `muse4ai-setup-win-x64.exe` · 171.8 MB · SHA-256 `D485A6A635257183DC7821E4636B7472242017E06A54FA71C0DDB59F6A519151`
+
 ## 2.0.0-beta.34 — 2026-11-06
 
 - Muse4AI now checks for new versions by itself. When one is out, open Settings › About and choose Download and install: it downloads, checks the file, installs and opens again in about a minute — your accounts, queue and library stay as they are.
