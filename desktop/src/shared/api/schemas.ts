@@ -161,6 +161,18 @@ export function checkIdempotencyKey(raw: string | string[] | undefined): string 
   return v;
 }
 
+/**
+ * Build 3.4 — REST accepts the MCP-style `request_id` in a POST /v1/jobs body as the idempotency key (the Agent Skill
+ * names it for both), so one recipe works on either surface. The header wins when equal; two different keys are refused.
+ */
+export function bodyRequestId(body: unknown, header: string | null): { body: unknown; idem: string | null } {
+  if (!body || typeof body !== "object" || Array.isArray(body) || !("request_id" in body)) return { body, idem: header };
+  const { request_id, ...rest } = body as Record<string, unknown>;
+  const v = checkIdempotencyKey(typeof request_id === "string" ? request_id : request_id === undefined ? undefined : "");
+  if (header !== null && v !== header) throw new ApiError(400, "invalid_request", "`request_id` khác Idempotency-Key — chỉ gửi một khoá", { errors: [{ path: "request_id", message: "khác Idempotency-Key" }] });
+  return { body: rest, idem: v };
+}
+
 /** Integer query parameter within [min, max]; missing → default. */
 export function intParam(raw: string | null, name: string, min: number, max: number, dflt: number): number {
   if (raw === null || raw === "") return dflt;

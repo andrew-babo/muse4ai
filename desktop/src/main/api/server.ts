@@ -29,7 +29,7 @@ import { runWithApiLocale } from "./requestLocale";
 
 const headerText = (h: string | string[] | undefined): string | undefined => (Array.isArray(h) ? h.join(",") : h);
 import type { RateLimiter } from "../../shared/api/rateLimit";
-import { checkIdempotencyKey, limitParam, waitParam } from "../../shared/api/schemas";
+import { bodyRequestId, checkIdempotencyKey, limitParam, waitParam } from "../../shared/api/schemas";
 import type { ApiAccess, ApiDomainProxy } from "../../shared/types";
 import type { McpHandler } from "./mcp";
 import type { ApiService, KeyCtx } from "./service";
@@ -283,7 +283,8 @@ export class ApiServer {
           // R109: a chat body may be up to 256 KB; image/video bodies keep the 64 KB limit.
           const { value: body, bytes } = await this.readJsonSized(req, API_CHAT_JSON_MAX_BYTES, "Thân JSON lớn hơn 256 KB");
           if (bytes > API_JSON_MAX_BYTES && (body as { kind?: unknown } | null)?.kind !== "chat") throw new ApiError(413, "body_too_large", "Thân JSON lớn hơn 64 KB");
-          const r = await this.d.service.createJobs(key!, body, idem, base);
+          const { body: rest, idem: key2 } = bodyRequestId(body, idem);
+          const r = await this.d.service.createJobs(key!, rest, key2, base);
           res.setHeader("Location", `/v1/jobs/${r.jobs[0].id}`);
           if (r.replayed) res.setHeader("Idempotent-Replayed", "true");
           return this.json(res, 202, { jobs: r.jobs });

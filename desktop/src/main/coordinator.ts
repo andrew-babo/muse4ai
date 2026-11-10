@@ -735,6 +735,7 @@ export class Coordinator {
         maxConcurrent: max,
         uiMaxConcurrent: Math.min(uiPerAccount, clampInt(a.uiMaxConcurrent, UI_MAX_RANGE, EXEC_DEFAULTS.uiMaxConcurrent)),
         httpUsable: httpBuild && this.exec.usable(a.id),
+        httpDegraded: httpBuild && this.exec.healthOf(a.id).state !== "healthy" && this.exec.healthOf(a.id).state !== "unknown",
         locked: !!lease && lease.kind !== "quota",
         mainPageBusy: lease?.kind === "quota",
       };

@@ -1,7 +1,7 @@
 {
   "name": "muse4ai",
   "productName": "Muse4AI",
-  "version": "2.0.0-beta.34",
+  "version": "2.0.0-beta.35",
   "private": true,
   "description": "Muse4AI — tạo ảnh và video qua Muse trên Windows",
   "main": "dist/main/main.cjs",

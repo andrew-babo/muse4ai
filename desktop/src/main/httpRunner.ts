@@ -47,6 +47,23 @@ export interface RunnerOps {
 }
 
 const SIGNAL_CLASS: Record<string, ErrorClass> = { needs_login: "SESSION_EXPIRED", checkpoint: "CHECKPOINT", quota: "QUOTA_LIMIT", anomaly: "ANOMALY_REPORTED", proxy: "PROXY_FAILED" };
+/**
+ * Build 3.4 — longest wait for the channel before a fresh send. Nothing has left yet, so the job goes back to the
+ * queue (another account) instead of waiting out the whole wake + reconnect ladder (up to ~16 min, live 10/11).
+ */
+export const PRE_SEND_CONNECT_BUDGET_MS = 90_000;
+
+/** Rejects with a connect_failed ChannelError when `p` takes longer than `ms`; `p` itself keeps running. */
+export function withBudget<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((res, rej) => {
+    const t = setTimeout(() => rej(new ChannelError("Kết nối tới Muse quá lâu, chuyển việc sang tài khoản khác", "connect_failed")), ms);
+    p.then(
+      (v) => (clearTimeout(t), res(v)),
+      (e) => (clearTimeout(t), rej(e)),
+    );
+  });
+}
+
 const TECH: HttpReason[] = ["connect_failed", "stream_lost", "protocol_mismatch", "fetch_failed", "no_ack"];
 const TECH_CLASS: Record<string, ErrorClass> = { connect_failed: "HTTP_CONNECT_FAILED", stream_lost: "HTTP_STREAM_LOST", protocol_mismatch: "HTTP_PROTOCOL_MISMATCH", fetch_failed: "HTTP_FETCH_FAILED", no_ack: "HTTP_STREAM_LOST" };
 
@@ -90,7 +107,7 @@ export class HttpJobRunner {
       if (!reconcile) {
         let ch;
         try {
-          ch = await this.o.exec.ensureConnected(accountId, abort.signal, true);
+          ch = await withBudget(this.o.exec.ensureConnected(accountId, abort.signal, true), PRE_SEND_CONNECT_BUDGET_MS);
         } catch (e) {
           return this.beforeSend(job.id, accountId, e, attemptId, fail);
         }

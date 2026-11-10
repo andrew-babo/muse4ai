@@ -47,6 +47,8 @@ export interface SchedAccount {
   uiMaxConcurrent?: number;
   /** HTTP may take new sends (health + app switch, R88/R97). */
   httpUsable?: boolean;
+  /** Build 3.4 — the direct channel recently failed (degraded/down/unchecked after failures): "auto" tries it last. */
+  httpDegraded?: boolean;
   /** Live UI runs (main page + work pages) and Vibes runs on this account. */
   runningUi?: number;
   runningVibes?: number;
@@ -168,8 +170,12 @@ export function schedule(input: SchedInput): Assignment[] {
     }
     if (withPath.length === 0) continue; // job waits; other jobs may still run (no global slot held)
     const rank = (a: Work) => (site === "muse" ? a.quotaRank ?? 0 : 0);
+    // Build 3.4 — an account whose channel just failed goes last for HTTP work: on 10/11 a degraded account kept
+    // getting new jobs that sat in "preparing" for minutes while healthy accounts were idle.
+    const flaky = (w: { acc: Work; path: ExecPath }) => (w.path === "http" && w.acc.httpDegraded ? 1 : 0);
     withPath.sort(
       (x, y) =>
+        flaky(x) - flaky(y) ||
         x.acc.running / x.acc.max - y.acc.running / y.acc.max ||
         rank(x.acc) - rank(y.acc) ||
         (x.acc.lastActiveAt ?? -Infinity) - (y.acc.lastActiveAt ?? -Infinity) ||
