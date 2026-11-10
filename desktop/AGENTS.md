@@ -32,6 +32,7 @@
 - Muse source extraction reads message-bound presentation metadata and a validated workspace locator, not playback URLs; version-sensitive page internals fail closed when absent because reload can replace blobs without replacing source files.
 - New Muse source ownership requires a freshly verified execution identity, never a cached identity after an unavailable check; unresolved sends retain their conversation reservation to prevent duplicate continuation.
 - Agents address a Muse conversation only by an app-issued opaque handle resolved to its saved current head; ownership is checked on that head's asset, unknown and foreign handles get the same 404, and Muse thread IDs and locators never leave the main process.
+- "Auto" assignment puts accounts whose channel is degraded/down last for HTTP work, and a fresh send waits at most `PRE_SEND_CONNECT_BUDGET_MS` for the channel before going back to the queue unsent, because the wake + reconnect ladder can take many minutes while healthy accounts sit idle.
 - A run moves its job out of `queued` synchronously, before any await, and the scheduler skips jobs with a live run, because a job still queued during an async pre-check gets leased to a second account and sent twice.
 - A proxy change holds an exclusive `proxy` lease for its whole wait and, after the 60 s wait, while the user is asked “Dừng chờ” (lapsing after 2 minutes); it then drops the direct channel, because nothing may be sent between the old and new proxy and the channel socket was opened through the old one.
 
