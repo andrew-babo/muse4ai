@@ -7,7 +7,7 @@
 | `muse_chat` | Send any prompt to Muse; get the answer verbatim, attached files and a `conversation_id`. | `prompt` (≤ 32000), `attachments` (reference ids or inline base64 files), `conversation_id`, `account`, `request_id`, `wait_seconds` |
 | `muse_get_job` | One job: status, error, outputs with download links (60 minutes) and a preview. | `job_id`, `wait_seconds` |
 | `muse_list_jobs` | Jobs made with this key, newest first. | `status`, `limit`, `cursor` |
-| `muse_cancel_job` | Cancel an unfinished job. If Muse already started, it may still finish and count usage. | `job_id` |
+| `muse_cancel_job` | Cancel an unfinished job. If Muse has already started, it may still finish and count usage. | `job_id` |
 | `muse_extend_video` | Make a Muse video longer step by step (only when `muse_status` lists `muse.video.extend`). Gain per step is not guaranteed. | `asset_id` or `conversation_id`, `mode` (`auto`/`directive`), `directive`, `times` (1–6) or `target_seconds` (15–60), `request_id`, `wait_seconds` |
 | `muse_get_extend` | One extend chain: status, steps, latest output. | `chain_id`, `wait_seconds` |
 
