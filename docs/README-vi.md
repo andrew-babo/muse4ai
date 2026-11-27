@@ -14,7 +14,8 @@ Claude, Cursor, Codex, n8n hay bất cứ công cụ nào biết gọi **REST**,
 [Tải về](https://muse4ai.andrewbabo.com/vi/download) ·
 [Hướng dẫn](https://muse4ai.andrewbabo.com/vi/docs) ·
 [Dành cho agent](https://muse4ai.andrewbabo.com/vi/agents) ·
-[English](../README.md)
+[English](../README.md) ·
+[日本語](README-ja.md)
 
 ![Website muse4ai.andrewbabo.com](https://img.shields.io/badge/website-muse4ai.andrewbabo.com-1A50D7?style=flat-square)
 ![Giấy phép MIT](https://img.shields.io/badge/license-MIT-2D664D?style=flat-square)
