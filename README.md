@@ -14,7 +14,8 @@ with no cloud middleman and no per-seat fee.
 [**Download**](https://muse4ai.andrewbabo.com/download) ·
 [**Guide**](https://muse4ai.andrewbabo.com/docs) ·
 [**For agents**](https://muse4ai.andrewbabo.com/agents) ·
-[Tiếng Việt](docs/README-vi.md)
+[Tiếng Việt](docs/README-vi.md) ·
+[日本語](docs/README-ja.md)
 
 ![Website muse4ai.andrewbabo.com](https://img.shields.io/badge/website-muse4ai.andrewbabo.com-1A50D7?style=flat-square)
 ![MIT licensed](https://img.shields.io/badge/license-MIT-2D664D?style=flat-square)
